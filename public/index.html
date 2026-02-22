@@ -706,5 +706,9 @@ function scrollTo(id){ const el=document.getElementById(id); el.scrollTop=el.scr
 function now(){ return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
 function escHtml(t){ const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
 </script>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="script.js"></script>
+  
 </body>
 </html>
