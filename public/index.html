@@ -5,12 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ReuBot</title>
 
-<ul id="messages"></ul>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="chat-container">
+    <h2 id="chat-title">Chat with: [Select a Contact]</h2>
 
-<form id="chat-form">
-  <input id="m" autocomplete="off" placeholder="Type a message..." />
-  <button>Send</button>
-</form>
+    <!-- Message window -->
+    <ul id="messages"></ul>
+
+    <!-- Input box -->
+    <form id="chat-form">
+      <input id="m" autocomplete="off" placeholder="Type your message..." />
+      <button>Send</button>
+    </form>
+  </div>
   
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="/socket.io/socket.io.js"></script>
