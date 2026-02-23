@@ -15,7 +15,9 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);display:flex;justify-c
 .screen.hidden{transform:translateX(100%);opacity:0;pointer-events:none}
 .screen.out{transform:translateX(-100%);opacity:0;pointer-events:none}
 #splash{background:var(--bg);justify-content:center;align-items:center;gap:16px;z-index:99}
-.splash-logo img{width:110px;height:110px;object-fit:contain;animation:pulse 2s infinite}
+<div class="splash-logo">
+  <span style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--text);letter-spacing:2px">ReuBot</span>
+</div>
 .splash-title{font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--text);letter-spacing:4px}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 #verify{background:var(--bg);z-index:10}
