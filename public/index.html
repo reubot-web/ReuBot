@@ -10,15 +10,15 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--bg:#c9d9f0;--btn:#8aa8c8;--btn2:#7090b0;--text:#1a2a3a;--sub:#4a6a8a;--acc:#5a8ab0;--cbg:#8aa8c8;--bin:#e8eff8;--bout:#ffffff;--green:#4caf8a;--red:#e05a5a;--nav:#7a9fc0;--nh:68px}
 body{font-family:'Nunito',sans-serif;background:var(--bg);display:flex;justify-content:center;align-items:center;min-height:100vh;overflow:hidden}
-.phone{width:100%;max-width:390px;height:100dvh;max-height:844px;position:relative;overflow:hidden;background:var(--bg)}
-.screen{position:absolute;inset:0;display:flex;flex-direction:column;transition:transform .38s cubic-bezier(.77,0,.18,1),opacity .38s}
-.screen.hidden{transform:translateX(100%);opacity:0;pointer-events:none}
-.screen.out{transform:translateX(-100%);opacity:0;pointer-events:none}
+phone{width:100%;max-width:390px;height:100dvh;max-height:844px;position:relative;overflow:hidden;background:var(--bg)}
+screen{position:absolute;inset:0;display:flex;flex-direction:column;transition:transform .38s cubic-bezier(.77,0,.18,1),opacity .38s}
+screen.hidden{transform:translateX(100%);opacity:0;pointer-events:none}
+screen.out{transform:translateX(-100%);opacity:0;pointer-events:none}
 #splash{background:var(--bg);justify-content:center;align-items:center;gap:16px;z-index:99}
-<div class="splash-logo">
-  <span style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--text);letter-spacing:2px">ReuBot</span>
-</div>
-.splash-title{font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--text);letter-spacing:4px}
+  
+<div class="splash-logo"><img src="data:image/png;base64style="width:38px;height:38px;object-fit:contain"></span>
+  
+splash-title{font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--text);letter-spacing:4px}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 #verify{background:var(--bg);z-index:10}
 .vbody{flex:1;padding:36px 28px 20px;display:flex;flex-direction:column;gap:20px;overflow-y:auto}
@@ -54,6 +54,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);display:flex;justify-c
 .tcontent{flex:1;overflow:hidden;position:relative}
 .tpane{position:absolute;inset:0;overflow-y:auto;display:none;flex-direction:column}
 .tpane.active{display:flex}
+  
 #tab-search{align-items:center;justify-content:center;gap:24px;text-align:center;padding:40px 28px}
 .shero{font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--text);letter-spacing:3px;line-height:1.05}
 .ssub{font-size:15px;color:var(--sub);font-weight:600;max-width:260px;line-height:1.5}
