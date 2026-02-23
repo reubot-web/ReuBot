@@ -5,6 +5,57 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>ReuBot</title>
 
+  <script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+let revealEnabled = false;
+
+socket.on("matched", () => {
+  document.getElementById("status").innerText = "Matched! Chat anonymously.";
+  document.getElementById("chatBox").style.display = "block";
+});
+
+function sendMessage() {
+  const input = document.getElementById("msg");
+  socket.emit("sendMessage", input.value);
+  input.value = "";
+}
+
+socket.on("receiveMessage", (msg) => {
+  const div = document.getElementById("messages");
+  div.innerHTML += "<p>" + msg + "</p>";
+});
+
+socket.on("enableReveal", () => {
+  revealEnabled = true;
+  document.getElementById("revealBtn").style.display = "inline";
+});
+
+function requestReveal() {
+  socket.emit("requestReveal");
+}
+
+socket.on("partnerWantsReveal", () => {
+  if (confirm("Your partner wants to reveal identity. Accept?")) {
+    socket.emit("acceptReveal");
+  }
+});
+
+socket.on("revealIdentity", () => {
+  alert("Identity Revealed!");
+});
+
+function leaveChat() {
+  socket.emit("leaveChat");
+  location.reload();
+}
+
+socket.on("partnerLeft", () => {
+  alert("Partner left the chat.");
+  location.reload();
+});
+</script>
+
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <script src="/socket.io/socket.io.js"></script>
 <style>
