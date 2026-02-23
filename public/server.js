@@ -9,6 +9,27 @@ const io = new Server(server, { cors: { origin: "*" } });
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+let searchingUsers = [];
+
+app.post("/find-match", (req, res) => {
+  const userId = req.session.userId;
+
+  if (!searchingUsers.includes(userId)) {
+    searchingUsers.push(userId);
+  }
+
+  if (searchingUsers.length >= 2) {
+    const user1 = searchingUsers.shift();
+    const user2 = searchingUsers.shift();
+
+    // save pairing logic here if needed
+
+    return res.json({ matchFound: true });
+  }
+
+  res.json({ matchFound: false });
+});
+
 // ── DATABASE ──
 const DATABASE = [
   { adviser: "Karleen R. Dumangas", students: ["AQUINO, RAZZEL V.","CAYABAN, CEDEE T.","DOLLETE, DANIEL LOUIS F.","DOMACENA, MICO ANGELO M.","ENRIQUEZ, THOMIE HENBERTSON C.","ESPAÑOL, JUNES IAN D.","LINGUAJE, REYNALDO JR. C.","QUILAB, JHAYE ANDRIE D.","RETIRADO, TJ CHARLS D.","TUGADE, ALFRED A.","VERMUG, EL CIV D.","VILLAREY, MATT EDREI D.","ANOCHE, ARIA MIEL D.","ANOCHE, DANA FAITH L.","AQUINO, MADILYN D.","ARIMAS, FAYE R.","BALUYOT, JHEMAICA C.","BASA, FRAN LUIZA E.","BAUTISTA, LEIGH ANN D.","BAYANI, JEYAN D.","BERGONIA, VENISSE NICOLE D.","DAYO, DAPHINE MAE D.","DELIQUIÑA, EUNICE S.","DITAPAT, AUBREY D.","ENCINARES, TIFFANY ZEA S.","FAMANILA, PHOEMELA ROSE A.","FEDERE, KRYSTLE ANNE D.","FERRER, JULIENNE NICOLE D.","FULGENCIO, KATHLEEN V.","GUIANG, KRYZ PAULA N.","LUNA, DONITA FE A.","MACAALAY, LOVELY MAY B.","OMAY, FLORENCE B.","QUINTO, JAZMINE JOY L.","RAMOS, DIANNE S.","RAYALA, EUREKA MAE V.","TAN, CLARISSE M.","VILLANUEVA, CHARM JILLIAN B."] },
