@@ -636,5 +636,32 @@ function closeSavedChat(){
   setTimeout(()=>sc.classList.add('hidden'),380);
 }
 </script>
+
+  <script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+
+  const input = document.getElementById("messageInput");
+  const form = document.getElementById("chatForm");
+
+  // Kapag pinindot ang Send button o Enter key
+  form.addEventListener("submit", function(e) {
+    e.preventDefault();
+    if (input.value.trim() !== "") {
+      socket.emit("chat message", input.value);
+      input.value = "";
+    }
+  });
+
+  // Pagtanggap ng messages
+  socket.on("chat message", function(msg) {
+    console.log("New message:", msg); // pwede mo palitan to para lumabas sa screen
+  });
+</script>
 </body>
+
+  <form id="chatForm">
+  <input type="text" id="messageInput" placeholder="Type a message..." />
+  <button type="submit">Send</button>
+</form>
 </html>
