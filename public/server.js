@@ -1,32 +1,13 @@
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
-const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
+
 app.use(express.json());
 app.use(express.static(__dirname));
-
-// --- SOCKET.IO ---
-io.on("connection", (socket) => {
-  console.log("User connected");
-
-  socket.on("chat message", (msg) => {
-    io.emit("chat message", msg); // ipapadala sa lahat ng clients
-  });
-
-  socket.on("disconnect", () => {
-    console.log("User disconnected");
-  });
-});
-
-// --- SERVER LISTEN ---
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log("Server running on port", PORT);
-});
 
 // ── DATABASE ──
 const DATABASE = [
@@ -82,19 +63,22 @@ app.post('/api/convos/:studentName', (req, res) => {
   res.json({ ok: true });
 });
 
-// ── SOCKET STATE ──
+// ── SOCKET.IO ──
 let waitingQueue = [];
-const rooms = new Map();       // roomId -> [sid1, sid2]
+const rooms = new Map();
 const socketToRoom = new Map();
-const socketToUser = new Map(); // sid -> { studentName, username }
+const socketToUser = new Map();
 
 io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
 
-  // Find match
+  // FIND MATCH
   socket.on("find_match", ({ schoolYear, studentName, adviserName, gender }) => {
     if (!validate(schoolYear, studentName, adviserName)) {
-      socket.emit("auth_error"); return;
+      socket.emit("auth_error");
+      return;
     }
+
     socketToUser.set(socket.id, { studentName: studentName.toUpperCase().trim(), username: "" });
     leaveRoom(socket);
 
@@ -118,14 +102,23 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Message
+  // SEND MESSAGE
   socket.on("send_message", ({ text }) => {
     const roomId = socketToRoom.get(socket.id);
     if (!roomId) return;
     socket.to(roomId).emit("receive_message", { text });
   });
 
-  // Reveal identity
+  // GLOBAL CHAT MESSAGE
+  socket.on("chat message", (msg) => {
+    io.emit("chat message", msg);
+  });
+
+  // TYPING INDICATOR
+  socket.on("typing", () => { const r = socketToRoom.get(socket.id); if (r) socket.to(r).emit("partner_typing"); });
+  socket.on("stop_typing", () => { const r = socketToRoom.get(socket.id); if (r) socket.to(r).emit("partner_stop_typing"); });
+
+  // REVEAL USERNAME
   socket.on("reveal_username", ({ username }) => {
     const roomId = socketToRoom.get(socket.id);
     if (!roomId) return;
@@ -134,18 +127,14 @@ io.on("connection", (socket) => {
     socket.to(roomId).emit("partner_revealed", { username });
   });
 
-  // Save conversation (called when both reveal or when leaving after reveal)
+  // SAVE CONVERSATION
   socket.on("save_convo", ({ partnerName, msgs }) => {
     const user = socketToUser.get(socket.id);
     if (!user) return;
     saveConvo(user.studentName, partnerName, msgs);
   });
 
-  // Typing
-  socket.on("typing", () => { const r = socketToRoom.get(socket.id); if (r) socket.to(r).emit("partner_typing"); });
-  socket.on("stop_typing", () => { const r = socketToRoom.get(socket.id); if (r) socket.to(r).emit("partner_stop_typing"); });
-
-  // Leave
+  // LEAVE ROOM / DISCONNECT
   socket.on("leave_chat", () => leaveRoom(socket));
   socket.on("disconnect", () => {
     leaveRoom(socket);
@@ -167,23 +156,6 @@ io.on("connection", (socket) => {
   }
 });
 
-// --- SOCKET.IO ---
-io.on("connection", (socket) => {
-  console.log("User connected");
-
-  socket.on("chat message", (msg) => {
-    io.emit("chat message", msg); // ipapadala sa lahat ng clients
-  });
-
-  socket.on("disconnect", () => {
-    console.log("User disconnected");
-  });
-});
-
-// --- SERVER LISTEN ---
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log("Server running on port", PORT);
-});
+// ── SERVER LISTEN ──
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`✅ ReuBot running on port ${PORT}`));
