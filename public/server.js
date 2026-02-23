@@ -29,7 +29,7 @@ function validate(schoolYear, name, adviser) {
 }
 
 // ── PERSISTENT STORAGE (in-memory, survives reconnects within session) ──
-// conversations[studentName] = [ { partnerName, msgs: [{dir,text}], date } ]
+// conversations[studentName] = [ { partnerName, msgs: [{dir,text}], } ]
 const conversations = new Map();
 
 function getConvos(studentName) {
@@ -149,4 +149,4 @@ io.on("connection", (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`✅ ReuBot running on port ${PORT}`));
+server.listen(PORT, () => console.log(` ReuBot running on port ${PORT}`));
