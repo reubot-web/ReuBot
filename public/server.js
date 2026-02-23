@@ -223,6 +223,78 @@ const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: { origin: "*" }
+});
+
+app.use(express.static("public"));
+
+let waitingUsers = [];
+
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
+
+  // AUTO JOIN QUEUE
+  waitingUsers.push(socket);
+
+  if (waitingUsers.length >= 2) {
+    const user1 = waitingUsers.shift();
+    const user2 = waitingUsers.shift();
+
+    const room = user1.id + "#" + user2.id;
+
+    user1.join(room);
+    user2.join(room);
+
+    user1.room = room;
+    user2.room = room;
+
+    user1.messageCount = 0;
+    user2.messageCount = 0;
+
+    io.to(room).emit("matched");
+  }
+
+  socket.on("sendMessage", (msg) => {
+    if (!socket.room) return;
+
+    socket.messageCount++;
+
+    io.to(socket.room).emit("receiveMessage", msg);
+
+    // After 5 messages, show reveal button
+    if (socket.messageCount === 5) {
+      io.to(socket.room).emit("enableReveal");
+    }
+  });
+
+  socket.on("requestReveal", () => {
+    socket.to(socket.room).emit("partnerWantsReveal");
+  });
+
+  socket.on("acceptReveal", () => {
+    io.to(socket.room).emit("revealIdentity");
+  });
+
+  socket.on("leaveChat", () => {
+    if (socket.room) {
+      io.to(socket.room).emit("partnerLeft");
+      socket.leave(socket.room);
+    }
+  });
+
+  socket.on("disconnect", () => {
+    waitingUsers = waitingUsers.filter(u => u.id !== socket.id);
+  });
+});
+
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
+
+const app = express();
+const server = http.createServer(app);
 const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
