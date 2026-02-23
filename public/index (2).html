@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Anonymous Chat</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #f0f0f0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── SCREENS ── */
+    .screen { display: none; width: 100%; max-width: 480px; padding: 20px; }
+    .screen.active { display: flex; flex-direction: column; gap: 14px; }
+
+    h2 { font-size: 1.4rem; text-align: center; color: #e0e0e0; }
+    p.sub { text-align: center; font-size: 0.85rem; color: #888; }
+
+    input, select {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #333;
+      background: #1a1a1a;
+      color: #f0f0f0;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    input:focus, select:focus { border-color: #6c63ff; }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      background: #6c63ff;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background: #574fd6; }
+    button:disabled { background: #444; cursor: not-allowed; }
+
+    /* ── CHAT SCREEN ── */
+    #chat-screen {
+      width: 100%;
+      max-width: 500px;
+      height: 100vh;
+      display: none;
+      flex-direction: column;
+      background: #111;
+    }
+    #chat-screen.active { display: flex; }
+
+    #chat-header {
+      padding: 14px 18px;
+      background: #1a1a1a;
+      border-bottom: 1px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    #chat-header .partner-name {
+      font-weight: 700;
+      font-size: 1rem;
+      color: #a78bfa;
+    }
+    #chat-header .status {
+      font-size: 0.75rem;
+      color: #6ee7b7;
+    }
+
+    #reveal-btn {
+      width: auto;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      background: #374151;
+      border-radius: 20px;
+    }
+    #reveal-btn:hover { background: #4b5563; }
+    #reveal-btn.pending { background: #7c3aed; }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .msg {
+      max-width: 75%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .msg.mine {
+      align-self: flex-end;
+      background: #6c63ff;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .msg.theirs {
+      align-self: flex-start;
+      background: #1f1f1f;
+      color: #e5e7eb;
+      border-bottom-left-radius: 4px;
+    }
+    .msg .sender {
+      font-size: 0.7rem;
+      margin-bottom: 4px;
+      opacity: 0.65;
+    }
+
+    .system-msg {
+      text-align: center;
+      font-size: 0.78rem;
+      color: #6b7280;
+      padding: 4px 0;
+      font-style: italic;
+    }
+
+    #typing-indicator {
+      padding: 0 16px 6px;
+      font-size: 0.78rem;
+      color: #6b7280;
+      font-style: italic;
+      min-height: 20px;
+    }
+
+    #input-area {
+      display: flex;
+      gap: 8px;
+      padding: 12px 14px;
+      border-top: 1px solid #1f1f1f;
+      background: #111;
+    }
+    #input-area input {
+      flex: 1;
+      border-radius: 24px;
+      padding: 10px 16px;
+    }
+    #send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+
+    /* ── SEARCHING SCREEN ── */
+    #searching-screen {
+      text-align: center;
+      gap: 20px;
+    }
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #333;
+      border-top-color: #6c63ff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── REVEAL MODAL ── */
+    #reveal-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    #reveal-modal.show { display: flex; }
+    .modal-box {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 16px;
+      padding: 28px 24px;
+      max-width: 340px;
+      width: 90%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .modal-box h3 { font-size: 1.1rem; }
+    .modal-box p { font-size: 0.85rem; color: #9ca3af; }
+    .modal-actions { display: flex; gap: 10px; }
+    .modal-actions button { font-size: 0.9rem; }
+    #modal-cancel { background: #374151; }
+    #modal-cancel:hover { background: #4b5563; }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN SCREEN ── -->
+<div class="screen active" id="login-screen">
+  <h2>🎭 Anonymous Chat</h2>
+  <p class="sub">Mag-login muna para mahanap ang match mo</p>
+  <input type="text" id="name-input" placeholder="Ilagay ang iyong pangalan (e.g. AQUINO, RAZZEL V.)" />
+  <button id="login-btn">Pumasok</button>
+  <p class="sub" id="login-error" style="color:#f87171;"></p>
+</div>
+
+<!-- ── SEARCHING SCREEN ── -->
+<div class="screen" id="searching-screen">
+  <h2>🔍 Naghahanap ng Match...</h2>
+  <div class="spinner"></div>
+  <p class="sub">Hintayin lang, may makikilala ka na!</p>
+  <button id="cancel-search-btn" style="background:#374151;">Kanselahin</button>
+</div>
+
+<!-- ── CHAT SCREEN ── -->
+<div id="chat-screen">
+  <div id="chat-header">
+    <div>
+      <div class="partner-name" id="partner-label">Anonymous B</div>
+      <div class="status">Online</div>
+    </div>
+    <button id="reveal-btn">👁 Reveal</button>
+  </div>
+  <div id="messages"></div>
+  <div id="typing-indicator"></div>
+  <div id="input-area">
+    <input type="text" id="msg-input" placeholder="Mag-type ng mensahe..." autocomplete="off" />
+    <button id="send-btn">➤</button>
+  </div>
+</div>
+
+<!-- ── REVEAL MODAL ── -->
+<div id="reveal-modal">
+  <div class="modal-box">
+    <h3>🎭 Reveal Identity?</h3>
+    <p>Kapag nag-reveal ka, malalaman ng partner mo kung sino ka — pero makikita mo rin kung sino siya kapag nag-reveal din siya.</p>
+    <div class="modal-actions">
+      <button id="modal-cancel">Huwag muna</button>
+      <button id="modal-confirm">Yes, Reveal!</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const socket = io();
+
+  let myUserId = null;
+  let myName = null;
+  let currentRoomId = null;
+  let myLabel = null;
+  let partnerLabel = null;
+  let iRevealed = false;
+  let partnerRevealed = false;
+  let typingTimeout = null;
+
+  // ── SCREENS ──
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('chat-screen').classList.remove('active');
+    const el = document.getElementById(id);
+    if (el) el.classList.add('active');
+  }
+
+  // ── LOGIN ──
+  document.getElementById('login-btn').addEventListener('click', () => {
+    const name = document.getElementById('name-input').value.trim().toUpperCase();
+    if (!name) return;
+
+    // Use name as userId (simple; replace with real auth if needed)
+    myUserId = name.replace(/\s+/g, '_') + '_' + Date.now();
+    myName = name;
+
+    socket.emit('register', myUserId);
+    showScreen('searching-screen');
+    socket.emit('start-search', myUserId);
+  });
+
+  document.getElementById('name-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('login-btn').click();
+  });
+
+  // ── CANCEL SEARCH ──
+  document.getElementById('cancel-search-btn').addEventListener('click', () => {
+    socket.emit('cancel-search', myUserId);
+    showScreen('login-screen');
+  });
+
+  // ── MATCH FOUND ──
+  socket.on('match-found', ({ roomId }) => {
+    currentRoomId = roomId;
+    showScreen('');
+    document.getElementById('chat-screen').classList.add('active');
+    addSystemMessage('🎭 Nakahanap ng match! Kumusta na anonymous chat!');
+  });
+
+  // ── SET LABELS ──
+  socket.on('set-labels', ({ myLbl, partnerLbl }) => {
+    myLabel = myLbl;
+    partnerLabel = partnerLbl;
+    document.getElementById('partner-label').textContent = partnerLabel;
+  });
+
+  // ── MESSAGES ──
+  document.getElementById('send-btn').addEventListener('click', sendMessage);
+  document.getElementById('msg-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') sendMessage();
+  });
+
+  function sendMessage() {
+    const input = document.getElementById('msg-input');
+    const text = input.value.trim();
+    if (!text || !currentRoomId) return;
+    socket.emit('send-message', { roomId: currentRoomId, userId: myUserId, text });
+    input.value = '';
+    socket.emit('stop-typing', { roomId: currentRoomId });
+  }
+
+  socket.on('new-message', ({ senderId, senderLabel, text, isRevealed }) => {
+    const isMine = senderId === myUserId;
+    addMessage(senderLabel, text, isMine);
+  });
+
+  function addMessage(sender, text, isMine) {
+    const div = document.createElement('div');
+    div.className = `msg ${isMine ? 'mine' : 'theirs'}`;
+    div.innerHTML = `<div class="sender">${sender}</div><div>${escapeHtml(text)}</div>`;
+    document.getElementById('messages').appendChild(div);
+    scrollToBottom();
+  }
+
+  function addSystemMessage(text) {
+    const div = document.createElement('div');
+    div.className = 'system-msg';
+    div.textContent = text;
+    document.getElementById('messages').appendChild(div);
+    scrollToBottom();
+  }
+
+  function scrollToBottom() {
+    const m = document.getElementById('messages');
+    m.scrollTop = m.scrollHeight;
+  }
+
+  // ── TYPING ──
+  document.getElementById('msg-input').addEventListener('input', () => {
+    if (!currentRoomId) return;
+    socket.emit('typing', { roomId: currentRoomId, userId: myUserId });
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+      socket.emit('stop-typing', { roomId: currentRoomId });
+    }, 1500);
+  });
+
+  socket.on('partner-typing', ({ label }) => {
+    document.getElementById('typing-indicator').textContent = `${label} ay nagta-type...`;
+  });
+
+  socket.on('partner-stop-typing', () => {
+    document.getElementById('typing-indicator').textContent = '';
+  });
+
+  // ── REVEAL ──
+  document.getElementById('reveal-btn').addEventListener('click', () => {
+    if (iRevealed) return;
+    document.getElementById('reveal-modal').classList.add('show');
+  });
+
+  document.getElementById('modal-cancel').addEventListener('click', () => {
+    document.getElementById('reveal-modal').classList.remove('show');
+  });
+
+  document.getElementById('modal-confirm').addEventListener('click', () => {
+    document.getElementById('reveal-modal').classList.remove('show');
+    iRevealed = true;
+    document.getElementById('reveal-btn').textContent = '⏳ Waiting...';
+    document.getElementById('reveal-btn').classList.add('pending');
+    socket.emit('reveal-identity', { roomId: currentRoomId, userId: myUserId, name: myName });
+    addSystemMessage('Hinihintay ang partner na mag-reveal din...');
+  });
+
+  socket.on('partner-reveal-request', () => {
+    addSystemMessage('🎭 Gusto ng partner mong malaman kung sino ka! I-reveal mo rin?');
+    if (!iRevealed) {
+      document.getElementById('reveal-btn').style.background = '#d97706';
+      document.getElementById('reveal-btn').textContent = '🔔 Reveal Now!';
+    }
+  });
+
+  socket.on('reveal-pending', () => {
+    addSystemMessage('Na-reveal mo na ang identity mo. Waiting for partner...');
+  });
+
+  socket.on('both-revealed', ({ identities }) => {
+    const names = Object.values(identities);
+    addSystemMessage(`🎉 Revealed na! Kayo ay: ${names.join(' at ')}`);
+    document.getElementById('reveal-btn').textContent = '✅ Revealed';
+    document.getElementById('reveal-btn').disabled = true;
+
+    // Update partner label
+    const partnerUserId = Object.keys(identities).find(id => id !== myUserId);
+    if (partnerUserId) {
+      const partnerName = identities[partnerUserId];
+      document.getElementById('partner-label').textContent = partnerName;
+    }
+  });
+
+  // ── DISCONNECT ──
+  socket.on('partner-disconnected', () => {
+    addSystemMessage('💔 Umalis na ang partner mo.');
+    document.getElementById('send-btn').disabled = true;
+    document.getElementById('msg-input').disabled = true;
+  });
+
+  // ── UTILS ──
+  function escapeHtml(text) {
+    return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+</script>
+</body>
+</html>
