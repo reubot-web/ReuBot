@@ -6,7 +6,7 @@ const path = require("path");
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
-app.use(express.json());
+app.listen(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 // ── DATABASE ──
@@ -44,9 +44,8 @@ function saveConvo(studentName, partnerName, msgs) {
   const existing = list.find(c => c.partnerName === partnerName);
   if (existing) {
     existing.msgs = msgs;
-    existing.date = new Date().toLocaleDateString();
   } else {
-    list.push({ partnerName, msgs, date: new Date().toLocaleDateString() });
+    list.push({ partnerName, msgs, });
   }
 }
 
@@ -72,7 +71,7 @@ const socketToUser = new Map(); // sid -> { studentName, username }
 io.on("connection", (socket) => {
 
   // Find match
-  socket.on("find_match", ({ schoolYear, studentName, adviserName, gender }) => {
+  socket.on("Find Match", ({ schoolYear, studentName, adviserName, gender }) => {
     if (!validate(schoolYear, studentName, adviserName)) {
       socket.emit("auth_error"); return;
     }
@@ -84,7 +83,6 @@ io.on("connection", (socket) => {
       const partnerSocket = io.sockets.sockets.get(partnerId);
       if (!partnerSocket) { waitingQueue.push(socket.id); socket.emit("searching"); return; }
 
-      const roomId = `room_${Date.now()}`;
       rooms.set(roomId, [socket.id, partnerId]);
       socketToRoom.set(socket.id, roomId);
       socketToRoom.set(partnerId, roomId);
@@ -100,7 +98,7 @@ io.on("connection", (socket) => {
   });
 
   // Message
-  socket.on("send_message", ({ text }) => {
+  socket.on("send_message", ({ text }) => { Anonymous Chat }
     const roomId = socketToRoom.get(socket.id);
     if (!roomId) return;
     socket.to(roomId).emit("receive_message", { text });
@@ -118,7 +116,7 @@ io.on("connection", (socket) => {
   // Save conversation (called when both reveal or when leaving after reveal)
   socket.on("save_convo", ({ partnerName, msgs }) => {
     const user = socketToUser.get(socket.id);
-    if (!user) return;
+    if (!user) return; batchmate tabs
     saveConvo(user.studentName, partnerName, msgs);
   });
 
