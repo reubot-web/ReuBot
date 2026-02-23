@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ReuBot</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<script src="/socket.io/socket.io.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--bg:#c9d9f0;--btn:#8aa8c8;--btn2:#7090b0;--text:#1a2a3a;--sub:#4a6a8a;--acc:#5a8ab0;--cbg:#8aa8c8;--bin:#e8eff8;--bout:#ffffff;--green:#4caf8a;--red:#e05a5a;--nav:#7a9fc0;--nh:68px}
+body{font-family:'Nunito',sans-serif;background:var(--bg);display:flex;justify-content:center;align-items:center;min-height:100vh;overflow:hidden}
+.phone{width:100%;max-width:390px;height:100dvh;max-height:844px;position:relative;overflow:hidden;background:var(--bg)}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;transition:transform .38s cubic-bezier(.77,0,.18,1),opacity .38s}
+.screen.hidden{transform:translateX(100%);opacity:0;pointer-events:none}
+.screen.out{transform:translateX(-100%);opacity:0;pointer-events:none}
+
+/* SPLASH */
+#splash{background:var(--bg);justify-content:center;align-items:center;gap:16px;z-index:99}
+.splash-logo{animation:pulse 2s infinite}
+.splash-logo img{width:110px;height:110px;object-fit:contain}
+.splash-title{font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--text);letter-spacing:4px}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+
+/* VERIFY */
+#verify{background:var(--bg);z-index:10}
+.vbody{flex:1;padding:36px 28px 20px;display:flex;flex-direction:column;gap:20px;overflow-y:auto}
+.vtitle{font-family:'Bebas Neue',sans-serif;font-size:46px;color:var(--text);letter-spacing:2px}
+.vsub{font-size:15px;color:var(--sub);font-weight:700;margin-top:-10px}
+.fg{display:flex;flex-direction:column;gap:7px}
+.flabel{font-size:13px;font-weight:800;color:var(--text)}
+.finput{width:100%;padding:15px 18px;border-radius:16px;border:2px solid transparent;background:white;font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;color:var(--text);outline:none;transition:border-color .2s;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.finput:focus{border-color:var(--acc)}
+.finput.err{border-color:var(--red)}
+.acwrap{position:relative}
+.aclist{position:absolute;top:100%;left:0;right:0;background:white;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.15);max-height:180px;overflow-y:auto;z-index:100;display:none}
+.aclist.show{display:block}
+.acitem{padding:12px 16px;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;border-bottom:1px solid #f0f0f0}
+.acitem:last-child{border-bottom:none}
+.acitem:hover{background:var(--bg)}
+.errmsg{font-size:13px;color:var(--red);font-weight:700;display:none;padding:8px 12px;background:rgba(224,90,90,.1);border-radius:10px}
+.errmsg.show{display:block}
+.mbtn{padding:17px;background:var(--btn);border:none;border-radius:16px;font-family:'Nunito',sans-serif;font-size:17px;font-weight:800;color:white;cursor:pointer;transition:background .2s,transform .1s;box-shadow:0 4px 16px rgba(0,0,0,.15);width:100%}
+.mbtn:hover{background:var(--btn2)}.mbtn:active{transform:scale(.97)}
+
+/* GENDER */
+#gender{background:var(--bg);justify-content:center;align-items:center;gap:28px;padding:40px 28px;text-align:center;z-index:10}
+.chk{width:76px;height:76px;background:var(--btn);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:34px;animation:popIn .4s cubic-bezier(.17,.67,.35,1.3)}
+@keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
+.gtitle{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--text);letter-spacing:2px}
+.gsub{font-size:15px;color:var(--sub);font-weight:600;margin-top:-8px}
+.gbtns{display:flex;gap:20px}
+.gbtn{width:138px;height:158px;background:white;border-radius:24px;border:2px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:var(--text);box-shadow:0 4px 16px rgba(0,0,0,.1);transition:all .2s}
+.gbtn:hover{border-color:var(--acc);transform:translateY(-2px)}
+.gbtn .em{font-size:50px}
+
+/* APP */
+#app{background:var(--bg);z-index:5}
+.ahdr{padding:16px 24px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.5);flex-shrink:0}
+.ahdr img{width:36px;height:36px;object-fit:contain}
+.abrand{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--text);letter-spacing:2px}
+.tcontent{flex:1;overflow:hidden;position:relative}
+.tpane{position:absolute;inset:0;overflow-y:auto;display:none;flex-direction:column}
+.tpane.active{display:flex}
+
+/* SEARCH TAB */
+#tab-search{align-items:center;justify-content:center;gap:24px;text-align:center;padding:40px 28px}
+.shero{font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--text);letter-spacing:3px;line-height:1.05}
+.ssub{font-size:15px;color:var(--sub);font-weight:600;max-width:260px;line-height:1.5}
+.sbig{width:130px;height:130px;background:var(--btn);border:none;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:white;box-shadow:0 8px 28px rgba(90,138,176,.45);transition:all .2s}
+.sbig:hover{transform:scale(1.05)}.sbig:active{transform:scale(.96)}
+.si{font-size:42px}
+.opill{background:white;border-radius:20px;padding:9px 20px;font-size:13px;font-weight:800;color:var(--acc);box-shadow:0 2px 10px rgba(0,0,0,.08)}
+
+/* SEARCHING */
+#tab-searching{align-items:center;justify-content:center;gap:24px;text-align:center;padding:40px 28px}
+.spin{width:60px;height:60px;border:4px solid rgba(138,168,200,.3);border-top-color:var(--acc);border-radius:50%;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.stitle{font-family:'Bebas Neue',sans-serif;font-size:34px;color:var(--text);letter-spacing:2px}
+.ssub2{font-size:14px;color:var(--sub);font-weight:600}
+.cbtn{background:none;border:2px solid var(--btn);border-radius:12px;padding:10px 28px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:var(--sub);cursor:pointer}
+
+/* MESSAGES TAB */
+#tab-messages{padding:20px;gap:10px}
+.ttitle{font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--text);letter-spacing:2px;padding:0 4px 4px;flex-shrink:0}
+.mempty{text-align:center;padding:60px 20px;color:var(--sub);font-weight:600;font-size:15px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.emicon{font-size:48px;opacity:.5}
+.citem{background:white;border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 10px rgba(0,0,0,.07);cursor:pointer;transition:transform .15s;flex-shrink:0}
+.citem:hover{transform:translateX(3px)}
+.cavatar{width:48px;height:48px;border-radius:50%;background:var(--btn);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.cinfo{flex:1;min-width:0}
+.cname{font-size:15px;font-weight:800;color:var(--text)}
+.cprev{font-size:13px;color:var(--sub);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.cdate{font-size:11px;color:var(--sub);font-weight:700;flex-shrink:0}
+
+/* PROFILE TAB */
+#tab-profile{padding:24px;gap:16px}
+.pcard{background:white;border-radius:24px;padding:28px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;box-shadow:0 4px 16px rgba(0,0,0,.08);flex-shrink:0}
+.pavatar{width:80px;height:80px;border-radius:50%;background:var(--btn);display:flex;align-items:center;justify-content:center;font-size:36px}
+.pname{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--text);letter-spacing:1px}
+.pbatch{font-size:13px;color:var(--sub);font-weight:700;background:var(--bg);padding:5px 14px;border-radius:20px}
+.slabel{font-size:12px;font-weight:800;color:var(--sub);letter-spacing:.5px}
+.uwrap{display:flex;gap:10px;align-items:center}
+.uinput{flex:1;padding:14px 16px;border-radius:14px;border:2px solid var(--bg);background:var(--bg);font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;color:var(--text);outline:none;transition:border-color .2s}
+.uinput:focus{border-color:var(--acc);background:white}
+.svbtn{padding:14px 20px;background:var(--btn);border:none;border-radius:14px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:white;cursor:pointer;white-space:nowrap}
+.svbtn:hover{background:var(--btn2)}
+.toast{font-size:13px;color:var(--green);font-weight:800;display:none}
+.toast.show{display:block}
+.pirow{display:flex;justify-content:space-between;align-items:center;background:var(--bg);border-radius:14px;padding:12px 16px;flex-shrink:0}
+.ilabel{font-size:13px;font-weight:700;color:var(--sub)}
+.ival{font-size:14px;font-weight:800;color:var(--text);text-align:right;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* BOTTOM NAV */
+.bnav{height:var(--nh);background:var(--nav);display:flex;justify-content:space-around;align-items:center;flex-shrink:0}
+.nbtn{flex:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:none;border:none;cursor:pointer;opacity:.55;transition:opacity .2s}
+.nbtn.active{opacity:1}
+.nbtn svg{width:26px;height:26px;stroke:white;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ndot{width:5px;height:5px;background:white;border-radius:50%;opacity:0;transition:opacity .2s}
+.nbtn.active .ndot{opacity:1}
+
+/* ANON CHAT */
+#chat{background:var(--bg);z-index:20}
+.chdr{background:var(--bg);padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.5);flex-shrink:0}
+.cback{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text);padding:4px 8px 4px 0}
+.cavsm{width:40px;height:40px;border-radius:50%;background:var(--btn);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.cinfob{flex:1}
+.cnamesm{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--text);letter-spacing:1px}
+.cstat{font-size:12px;color:var(--green);font-weight:700}
+.rvbtn{background:white;border:2px solid var(--btn);border-radius:12px;padding:7px 14px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;color:var(--acc);cursor:pointer;white-space:nowrap;transition:all .2s}
+.rvbtn:hover{background:var(--btn);color:white}
+.rvbtn:disabled{opacity:.4;cursor:default;background:white;color:var(--sub)}
+.cmsgs{flex:1;background:var(--cbg);padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.sysmsg{text-align:center;font-size:12px;font-weight:700;color:rgba(255,255,255,.9);background:rgba(255,255,255,.2);padding:7px 16px;border-radius:20px;align-self:center;max-width:90%}
+.bwrap{display:flex;flex-direction:column;max-width:78%}
+.bwrap.out{align-self:flex-end;align-items:flex-end}
+.bwrap.in{align-self:flex-start}
+.bubble{padding:11px 15px;border-radius:20px;font-size:15px;font-weight:600;line-height:1.4;color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.bwrap.out .bubble{background:var(--bout);border-bottom-right-radius:4px}
+.bwrap.in .bubble{background:var(--bin);border-bottom-left-radius:4px}
+.typi{align-self:flex-start;display:none}
+.typi.show{display:flex}
+.tdots{background:var(--bin);border-radius:20px;border-bottom-left-radius:4px;padding:11px 15px;display:flex;gap:4px;align-items:center}
+.dot{width:6px;height:6px;background:var(--sub);border-radius:50%;animation:db 1.2s infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes db{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+.ciarea{background:var(--bg);padding:10px 14px;display:flex;gap:10px;align-items:center;flex-shrink:0}
+.cinput{flex:1;padding:13px 18px;border-radius:24px;border:none;background:white;font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;color:var(--text);outline:none;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.sndbtn{width:46px;height:46px;background:var(--btn);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s,transform .1s;flex-shrink:0}
+.sndbtn:hover{background:var(--btn2)}.sndbtn:active{transform:scale(.92)}
+.sndbtn svg{width:19px;height:19px;fill:white;stroke:none}
+
+/* SAVED CHAT */
+#saved-chat{background:var(--bg);z-index:25}
+
+/* MODAL */
+.moverlay{position:absolute;inset:0;background:rgba(26,42,58,.5);display:none;align-items:flex-end;z-index:50}
+.moverlay.show{display:flex}
+.msheet{background:white;border-radius:28px 28px 0 0;padding:28px 28px 44px;width:100%;display:flex;flex-direction:column;gap:16px;animation:su .3s cubic-bezier(.17,.67,.35,1.1)}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.mtitle{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--text);letter-spacing:1px}
+.msub{font-size:14px;color:var(--sub);font-weight:600;line-height:1.5;margin-top:-8px}
+.mushow{background:var(--bg);border-radius:14px;padding:14px 18px;font-size:18px;font-weight:800;color:var(--acc);text-align:center}
+.mbtns{display:flex;gap:12px}
+.mok{flex:1;padding:15px;background:var(--btn);border:none;border-radius:14px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:white;cursor:pointer}
+.mno{flex:1;padding:15px;background:var(--bg);border:none;border-radius:14px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:var(--sub);cursor:pointer}
+</style>
+</head>
+<body>
+<div class="phone">
+
+<!-- SPLASH -->
+<div class="screen" id="splash">
+  <div class="splash-logo"><img id="logoSplash" src="/logo.png" alt="ReuBot"></div>
+  <div class="splash-title">ReuBot</div>
+</div>
+
+<!-- VERIFY -->
+<div class="screen hidden" id="verify">
+  <div class="vbody">
+    <div><div class="vtitle">Batch Verify</div><div class="vsub">reconnect with your classmates!</div></div>
+    <div class="fg">
+      <div class="flabel">School Year</div>
+      <input class="finput" id="schoolYear" value="2023-2024" readonly>
+    </div>
+    <div class="fg">
+      <div class="flabel">Your Name</div>
+      <div class="acwrap">
+        <input class="finput" id="studentName" placeholder="Type your last name..." autocomplete="off"
+          oninput="filterStudents(this.value)" onblur="hideAC('acStudents')" onfocus="filterStudents(this.value)">
+        <div class="aclist" id="acStudents"></div>
+      </div>
+    </div>
+    <div class="fg">
+      <div class="flabel">Adviser Name</div>
+      <div class="acwrap">
+        <input class="finput" id="adviserName" placeholder="Type adviser name..." autocomplete="off"
+          oninput="filterAdvisers(this.value)" onblur="hideAC('acAdvisers')" onfocus="filterAdvisers(this.value)">
+        <div class="aclist" id="acAdvisers"></div>
+      </div>
+    </div>
+    <div class="errmsg" id="errMsg"></div>
+    <button class="mbtn" onclick="doVerify()">Verify Batch</button>
+  </div>
+</div>
+
+<!-- GENDER -->
+<div class="screen hidden" id="gender">
+  <div class="chk">✓</div>
+  <div class="gtitle">Now you are ready!</div>
+  <div class="gsub">Choose your gender and start chatting.</div>
+  <div class="gbtns">
+    <button class="gbtn" onclick="setGender('man')"><span class="em">👦</span>I'm a man</button>
+    <button class="gbtn" onclick="setGender('woman')"><span class="em">👧</span>I'm a woman</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="screen hidden" id="app">
+  <div class="ahdr">
+    <img src="/logo.png" alt="ReuBot">
+    <div class="abrand">ReuBot</div>
+  </div>
+  <div class="tcontent">
+    <div class="tpane active" id="tab-search">
+      <div class="shero">Find a<br>Batch Mate</div>
+      <div class="ssub">Tap to anonymously connect with a 2023-2024 classmate who's online!</div>
+      <button class="sbig" onclick="startSearch()">
+        <span class="si">🔍</span>Start Chat
+      </button>
+      <div class="opill">👥 Ready to connect</div>
+    </div>
+    <div class="tpane" id="tab-searching">
+      <div class="spin"></div>
+      <div class="stitle">Finding a<br>Batch Mate...</div>
+      <div class="ssub2">Waiting for someone online 👀</div>
+      <button class="cbtn" onclick="cancelSearch()">Cancel</button>
+    </div>
+    <div class="tpane" id="tab-messages">
+      <div class="ttitle">Messages</div>
+      <div id="msgList"><div class="mempty"><div class="emicon">💬</div><div>No conversations yet.<br>Chat anonymously then reveal identity to save here!</div></div></div>
+    </div>
+    <div class="tpane" id="tab-profile">
+      <div class="ttitle">Profile</div>
+      <div class="pcard">
+        <div class="pavatar" id="pavatar">👤</div>
+        <div class="pname" id="pname">—</div>
+        <div class="pbatch">Batch 2023–2024</div>
+      </div>
+      <div class="fg">
+        <div class="slabel">SET USERNAME (for reveal identity)</div>
+        <div class="uwrap">
+          <input class="uinput" id="uinput" placeholder="e.g. razzel2024" maxlength="20">
+          <button class="svbtn" onclick="saveUsername()">Save</button>
+        </div>
+        <div class="toast" id="toast">✅ Username saved!</div>
+      </div>
+      <div class="fg">
+        <div class="slabel">YOUR INFO</div>
+        <div class="pirow"><div class="ilabel">Full Name</div><div class="ival" id="iname">—</div></div>
+        <div class="pirow"><div class="ilabel">Adviser</div><div class="ival" id="iadviser">—</div></div>
+        <div class="pirow"><div class="ilabel">Gender</div><div class="ival" id="igender">—</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="bnav">
+    <button class="nbtn active" id="nav-search" onclick="switchTab('search')">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <div class="ndot"></div>
+    </button>
+    <button class="nbtn" id="nav-messages" onclick="switchTab('messages')">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <div class="ndot"></div>
+    </button>
+    <button class="nbtn" id="nav-profile" onclick="switchTab('profile')">
+      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <div class="ndot"></div>
+    </button>
+  </div>
+</div>
+
+<!-- ANON CHAT -->
+<div class="screen hidden" id="chat">
+  <div class="chdr">
+    <button class="cback" onclick="leaveChat()">←</button>
+    <div class="cavsm">🔗</div>
+    <div class="cinfob">
+      <div class="cnamesm" id="chatPartner">Anonymous</div>
+      <div class="cstat" id="chatStat">• Online</div>
+    </div>
+    <button class="rvbtn" id="rvbtn" onclick="showReveal()" style="display:none">Reveal Identity</button>
+  </div>
+  <div class="cmsgs" id="cmsgs"></div>
+  <div class="typi" id="typi"><div class="tdots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+  <div class="ciarea">
+    <input class="cinput" id="cinput" placeholder="Type a message..."
+      oninput="onType()" onkeydown="if(event.key==='Enter')sendMsg()">
+    <button class="sndbtn" onclick="sendMsg()">
+      <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+    </button>
+  </div>
+  <div class="moverlay" id="rvModal" onclick="if(event.target===this)hideReveal()">
+    <div class="msheet">
+      <div class="mtitle">Reveal Your Identity</div>
+      <div class="msub">Your batch mate will see your username. Kapag nag-reveal ka, makikita mo rin kung sino siya (kapag nag-reveal din siya).</div>
+      <div class="mushow" id="mushow">@username</div>
+      <div class="mbtns">
+        <button class="mno" onclick="hideReveal()">Cancel</button>
+        <button class="mok" onclick="confirmReveal()">Reveal ✓</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SAVED CHAT VIEW -->
+<div class="screen hidden" id="saved-chat">
+  <div class="chdr">
+    <button class="cback" onclick="closeSavedChat()">←</button>
+    <div class="cavsm">👤</div>
+    <div class="cinfob">
+      <div class="cnamesm" id="scPartner">—</div>
+      <div class="cstat" style="color:var(--sub)">• Saved conversation</div>
+    </div>
+  </div>
+  <div class="cmsgs" id="scMsgs"></div>
+</div>
+
+</div>
+<script>
+const DB=[
+  {adviser:"Karleen R. Dumangas",students:["AQUINO, RAZZEL V.","CAYABAN, CEDEE T.","DOLLETE, DANIEL LOUIS F.","DOMACENA, MICO ANGELO M.","ENRIQUEZ, THOMIE HENBERTSON C.","ESPAÑOL, JUNES IAN D.","LINGUAJE, REYNALDO JR. C.","QUILAB, JHAYE ANDRIE D.","RETIRADO, TJ CHARLS D.","TUGADE, ALFRED A.","VERMUG, EL CIV D.","VILLAREY, MATT EDREI D.","ANOCHE, ARIA MIEL D.","ANOCHE, DANA FAITH L.","AQUINO, MADILYN D.","ARIMAS, FAYE R.","BALUYOT, JHEMAICA C.","BASA, FRAN LUIZA E.","BAUTISTA, LEIGH ANN D.","BAYANI, JEYAN D.","BERGONIA, VENISSE NICOLE D.","DAYO, DAPHINE MAE D.","DELIQUIÑA, EUNICE S.","DITAPAT, AUBREY D.","ENCINARES, TIFFANY ZEA S.","FAMANILA, PHOEMELA ROSE A.","FEDERE, KRYSTLE ANNE D.","FERRER, JULIENNE NICOLE D.","FULGENCIO, KATHLEEN V.","GUIANG, KRYZ PAULA N.","LUNA, DONITA FE A.","MACAALAY, LOVELY MAY B.","OMAY, FLORENCE B.","QUINTO, JAZMINE JOY L.","RAMOS, DIANNE S.","RAYALA, EUREKA MAE V.","TAN, CLARISSE M.","VILLANUEVA, CHARM JILLIAN B."]},
+  {adviser:"Jeff Aaron D. Reytomas",students:["ACUAVERA, LLOYD M.","ANASTACIO, ZERWYANE JADE A.","BETON, RAMON EXEQUIEL E.","BLANCO, WILLIAM JEFF V.","CABIDO, VRAYXON P.","DANTES, FERNANDO KARLO D.","DEJUMO, RODEL JR. D.","DELA CRUZ, RANNUEL P.","DEVERA, LOVERN G.","DOLANDOLAN, RINZEL R.","DOYANAN, ARWIN F.","ENCARNACION, BRIAN JOEL D.","GALLARDO, CHARLES ANTHONY D.","JUANICO, JOSE MIGUEL M.","NESPEROS, MHELMAR D.","ANGELES, ALLYSSA D.","ARAUCTO, MARY SALVACION D.","BALANGON, IRISH COLEEN D.","BALAURO, KRIZEL LHYNE P.","DANTE, EIRRENE CLEO F.","DAYAP, ZYNETH REXIE S.","DEDICATORIA, JESSICA","DELA CRUZ, JANNEL M.","DEVERA, AMANDA SYMONE V.","DEVERA, ANGEL N.","DEVILLAS, JASMIN R.","DIAL, ALTHEA LOREEN D.","DIMASACUPAN, KATRINA R.","DOLFO, APRIL DANE M.","DUAVE, MARY ANGEL R.","JUSTO, JESIAH MAE A.","MANLICLIC, ERICKA P.","SUNGA, KIM AIZABEL D.","TAPADO, ALEXA ARRIANE Q."]},
+  {adviser:"Edgar B. Pangilinan",students:["APOLONA, FRANCIS P.","BALDUEZA, JOHN JOSHUA D.","DULLON, CARL DAVE R.","FARILLON, ZEDRICK G.","GONZALES, RAVEN N.","LATT, MCKELL AUNG O.","OSBORNE, JESSE RAFAEL E.","ROMANBAN, KURT JULIAN C.","SERIAL, JUSTINE JEREL E.","YAP, TRIBERSAN D.","ABALLA, ANNA MAE D.","ABION, CHERRY ANNE D.","ABUJEN, SHA-YNA D.","ACRAMAN, HAYANI A.","ARAUCTO, ASHLEY ARIANNA F.","BACANI, CHARMAINE ANNE B.","BUNGLO, JANELLE B.","DESUNIA, EDELYN D.","DEVERA, ANGELINE A.","DIMALANTA, MARY SAN A.","DOLLETE, KATE MARLEY D.","DURON, ANGEL ROSE D.","FRONDARINA, LOUREN JOY D.","GUANGA, LIAN NICOLE P.","LLANES, JACQUELENE FAITH R.","MACANDOG, JANELLA ROSE L.","MANALO, EINA KLAYRE D.","MANILA, PRINCESS MICAH R.","MAYA, NATHALIE D.","PONCE, ANDREA MAE I.","SALAZAR, JANNAH D.","SUBONG, WINNIE CLAIRE M.","TANDOC, MICHAELLA MARIE P.","TELEBRICO, MADELLINE"]},
+  {adviser:"Lanie L. Fabrigas",students:["AGAGAS, JOHN LEE C.","BALANGON, ANDREW B.","BALUYOT, ZEDRIK JOHN F.","DACLISON, NATHANIEL F.","DAOS, HARVY F.","DIAZ, AREN FRANZ D.","DIMAANO, LANCE H.","DOBLE, JAN NATHAN B.","DOYANAN, JEREMY D.","EDUCALAN, HALE D.","EUGENIO, MICHAEL JAY G.","FERNANDEZ, JOHN CRIS B.","LABASAN, JEROME B.","PANES, DAVID CARL M.","BAUTISTA, ANGELICA MAY D.","BENEDICTO, LARAH JANELLE G.","BESA, MARIELLE FEBIE G.","BUGARIN, GELLIAN PEARL E.","BUGARIN, KIM R.","DELIDELI, LEA D.","DIAGO, GERLYN M.","DIESTA, HAZELLE MAE D.","DIMAANO, TRISHA MAE F.","DIVINO, LHARIAN LAVIGNE E.","ENCARNACION, ANRE FHEY A.","EVANGELISTA, MARLYN M.","GAEN, IZAH FRANCHESKA A.","MALVEDA, JEMIMAH PATRICIA M.","MANGOHIG, PRECIOUS LEAJ M.","MIWA, SHIKI B.","MORA, PRECIOUS JOSEPHINE C.","PACHECO, PRINCESS FATIMA G.","PAGAR, MARIA JANEIL D.","PALISOC, LADY KIANA A.","PUZON, KIARA MIA R."]},
+  {adviser:"Monna Liza T. Cruzado",students:["BALUYOT, LUCKY JB D.","CRUZ, JHEREZ AIZEN C.","DOCUYANAN, CARLIE JAMES N.","ESCASURA, KENNETH D.","ESMELO, REYMUND A.","LAUREL, BRYLLE ANDRE J.","LOGATOC, JAMES LARRENCE V.","PANES, CEPHT ADRIAN M.","RIBO, REYJAN M.","ROMERO, JOHN DARYLL D.","SARMIENTO, KARL D.","BULATAO, PRECIOUS REYNN R.","DACER, HERSHEY A.","DANTAY, JAMUEL M.","DANTE, YELENA BEATRICE A.","DAQUINAG, LERA JOY P.","DEVESFRUTO, XYLLENNE D.","DIMAANO, MABEL S.","DIZON, LORRINE NICOLE E.","DOMINGO, TRIXIE JOY M.","DORIO, KIMBERLY JANE A.","FALLORIA, MARGIELYN D.","FELICITAS, JHENRIL C.","JAVIER, APRIL ANNE J.","MEJIA, DANICA MAE D.","MENDOZA, JAIRA JAHEIL F.","PANGILINAN, EURIKA R.","PASAG, ANGEL FAYE D.","RABACA, KRISHA MIEL B.","SABERON, ALTHEA JOY G.","SAN JOSE, YASMINE GAYLE M.","TORRES, AIZELLE MAE P.","VALDEZ, ALYSSA MAY C.","VALLENTE, SHEKINAH ZIMNEL B.","VICTORIA, JESSY MAE C.","VISCA, CZARINA DOMINIQUE A."]},
+  {adviser:"Diana Rose M. Torres",students:["ALIBIADO, MICHAEL P.","BAYANI, HERALD D.","CABANLIG, JOHN EARL R.","CERVANTES, JENCINTH ALFARL R.","DORDE, ADOLF HITLER G.","DORIG, KRIS MIKAEL C.","DULLON, DANIEL DAVE B.","EPAN, RODOLFO CESAR A.","FERRER, VINCE JUSTINE D.","GALANG, ABRAHAM PAUL","GANTANG, JAMES JASTER L.","GOMEZ, WAYNE ACHILLES D.","LAPINIG, EDRIAN L.","MALLARI, JERAMHEEL C.","YABUT, AIZEN DAVE P.","YANIG, ANGELO D.","ABUJEN, FEBIE ANGELIE B.","AGBUYA, ANGEL ANN P.","ASLAM, BISMA A.","AYTONA, SHEILA MAE","BALINTAY, KRISTEL C.","CABANGON, KHATE COLLYNE","CALUGAY, GAIL HAYDEN M.","CORTEZANO, JAY-ZEE D.","DACLISON, MARY CATHERINE T.","DAPITIN, KYLIE MARIE T.","DEVILLENA, MELISSA ANN B.","DIAGO, JENNY B.","DIAL, JEN ANDREA D.","FLORES, ALLYANA MARIE B.","FONTANILLA, JHAZMINE F.","GABO, ANGEL ANNE","GOLEZ, JHASSEZ D.","IDOS, CHRISTINE JOY A.","ISIDRO, SHANE D.","LESACA, ZYAMILLAH XYKE E.","PINEDA, AZALIA C.","RIAZA, CHRISTINE MAE S.","SERIAL, DARLENE JOY L.","TONGOL, DANNA ROSE C."]},
+  {adviser:"Jayson R. Cayaga",students:["ARANDIA, JOHN NICO D.","BALUYOT, JANSEN ERA M.","BAUSA, SEANN WILLIAM D.","CORTEZ, KIRBY ANGELO C.","DEGOLLADO, SEBASTIAN ETHAN R.","DEL ROSARIO, IEL IVAN D.","DIMAQUIBO, RUBEN JR. M.","DOLANDOLAN, LEXTER R.","ESCOBAL, REYSTER KLEIN D.","ESTACION, JOHN VINCENT D.","FAMANILA, JOHN PAZ D.","GONZALES, HUE D.","MORANTE, JOHN CHARLE MAGNE D.","NALICAT, AINSLEE XYRONE S.","RAFAEL, MARK ANGELO R.","SALAZAR, JAMES D.","ABUJEN, LESLIE G.","ARCALA, JULLIE DIVINE E.","BADAR, ALEXA MAE D.","BALANGON, TATZ MILDRED N.","CORTEZ, BERLYN RUTH D.","DAOS, ANGELA FAITH P.","DEGOLLADO, ANDREA SAMANTHA A.","DIMAANO, AERIELLE FAYE M.","DOLLUERAS, MELONA JOY L.","ELBO, DENNISE A.","EVANGELISTA, DANICA F.","FAMULARCANO, ANDREA E.","FERNANDEZ, ANN LYN DIANE","GALIN, KC G.","GOBALANI, RIZA NICOLE G.","INIGO, LINDSAY G.","PACHECO, VERONICA","PANLAQUE, JENELYN P.","PLOMANTES, ALLYN M.","REMULLA, TRISHA MAE R.","TANDOC, RACHEL LARIT T."]}
+];
+const ALL_S=DB.flatMap(d=>d.students).sort();
+const ALL_A=DB.map(d=>d.adviser).sort();
+
+let userData={};
+let username='';
+let socket=null;
+let typTimer=null;
+let curMsgs=[];
+let iRevealed=false;
+let partnerRevealed=false;
+let partnerUsername='';
+
+setTimeout(()=>goTo('splash','verify'),1800);
+
+function goTo(from,to){
+  const f=document.getElementById(from),t=document.getElementById(to);
+  f.classList.add('out');t.classList.remove('hidden');
+  setTimeout(()=>f.classList.add('hidden'),380);
+}
+function switchTab(tab){
+  document.querySelectorAll('.tpane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nbtn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  const n=document.getElementById('nav-'+tab);
+  if(n)n.classList.add('active');
+}
+
+// AUTOCOMPLETE
+function filterStudents(v){
+  const l=document.getElementById('acStudents');
+  if(!v||v.length<2){l.classList.remove('show');return;}
+  const q=v.toUpperCase().trim();
+  const m=ALL_S.filter(s=>s.includes(q)).slice(0,8);
+  if(!m.length){l.classList.remove('show');return;}
+  l.innerHTML=m.map(s=>`<div class="acitem" onmousedown="pickStudent('${s.replace(/'/g,"\\'")}')">${s}</div>`).join('');
+  l.classList.add('show');
+}
+function pickStudent(name){
+  document.getElementById('studentName').value=name;
+  document.getElementById('acStudents').classList.remove('show');
+  const sec=DB.find(d=>d.students.includes(name));
+  if(sec)document.getElementById('adviserName').value=sec.adviser;
+}
+function filterAdvisers(v){
+  const l=document.getElementById('acAdvisers');
+  if(!v||v.length<2){l.classList.remove('show');return;}
+  const m=ALL_A.filter(a=>a.toLowerCase().includes(v.toLowerCase()));
+  if(!m.length){l.classList.remove('show');return;}
+  l.innerHTML=m.map(a=>`<div class="acitem" onmousedown="pickAdviser('${a.replace(/'/g,"\\'")}')">${a}</div>`).join('');
+  l.classList.add('show');
+}
+function pickAdviser(name){
+  document.getElementById('adviserName').value=name;
+  document.getElementById('acAdvisers').classList.remove('show');
+}
+function hideAC(id){setTimeout(()=>document.getElementById(id).classList.remove('show'),200);}
+
+// VERIFY
+function doVerify(){
+  const name=document.getElementById('studentName').value.trim().toUpperCase();
+  const adviser=document.getElementById('adviserName').value.trim();
+  const err=document.getElementById('errMsg');
+  err.classList.remove('show');
+  ['studentName','adviserName'].forEach(id=>document.getElementById(id).classList.remove('err'));
+  if(!name||!adviser){err.textContent='⚠️ Fill in all fields.';err.classList.add('show');return;}
+  const sec=DB.find(d=>d.students.some(s=>s.toUpperCase()===name));
+  if(!sec){err.textContent='❌ Name not found in 2023-2024 batch.';err.classList.add('show');document.getElementById('studentName').classList.add('err');return;}
+  if(sec.adviser.toLowerCase()!==adviser.toLowerCase()){err.textContent='❌ Adviser does not match.';err.classList.add('show');document.getElementById('adviserName').classList.add('err');return;}
+  userData={schoolYear:'2023-2024',studentName:name,adviserName:adviser};
+  goTo('verify','gender');
+}
+
+// GENDER
+function setGender(g){
+  userData.gender=g;
+  goTo('gender','app');
+  updateProfile();
+  initSocket();
+  loadConvos();
+}
+
+function updateProfile(){
+  const em=userData.gender==='man'?'👦':'👧';
+  document.getElementById('pavatar').textContent=em;
+  document.getElementById('pname').textContent=userData.studentName.split(',')[0];
+  document.getElementById('iname').textContent=userData.studentName;
+  document.getElementById('iadviser').textContent=userData.adviserName;
+  document.getElementById('igender').textContent=userData.gender==='man'?'Male':'Female';
+}
+
+function saveUsername(){
+  const v=document.getElementById('uinput').value.trim();
+  if(!v)return;
+  username=v;
+  const t=document.getElementById('toast');
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// SOCKET
+function initSocket(){
+  socket=io();
+  socket.on('searching',()=>{});
+  socket.on('matched',()=>{
+    curMsgs=[];iRevealed=false;partnerRevealed=false;partnerUsername='';
+    openChat();
+  });
+  socket.on('receive_message',({text})=>addBubble('in',text));
+  socket.on('partner_revealed',({username:pu})=>{
+    partnerRevealed=true;
+    partnerUsername=pu;
+    addSysMsg('Your batch mate revealed their identity: @'+pu);
+    document.getElementById('chatPartner').textContent='@'+pu;
+    if(iRevealed)doSaveConvo(pu);
+  });
+  socket.on('partner_typing',()=>{document.getElementById('typi').classList.add('show');scrollChat();});
+  socket.on('partner_stop_typing',()=>{document.getElementById('typi').classList.remove('show');});
+  socket.on('partner_left',()=>{
+    document.getElementById('typi').classList.remove('show');
+    addSysMsg('Your batch mate left the chat.');
+    document.getElementById('chatStat').textContent='• Disconnected';
+    document.getElementById('chatStat').style.color='var(--red)';
+    document.getElementById('rvbtn').disabled=true;
+  });
+  socket.on('auth_error',()=>{alert('❌ Invalid credentials. Please refresh.');});
+}
+
+// SEARCH
+function startSearch(){
+  if(!socket||!socket.connected){alert('Connection error. Refresh the page!');return;}
+  switchTab('searching');
+  socket.emit('find_match',userData);
+}
+function cancelSearch(){
+  if(socket)socket.emit('leave_chat');
+  switchTab('search');
+}
+
+// OPEN ANON CHAT (comes from searching screen)
+function openChat(){
+  curMsgs=[];
+  const app=document.getElementById('app'),chat=document.getElementById('chat');
+  app.classList.add('out');chat.classList.remove('hidden');
+  setTimeout(()=>app.classList.add('hidden'),380);
+  document.getElementById('cmsgs').innerHTML='<div class="sysmsg">Connected to a batch mate! Say hi 👋</div>';
+  document.getElementById('chatStat').textContent='• Online';
+  document.getElementById('chatStat').style.color='var(--green)';
+  document.getElementById('chatPartner').textContent='Anonymous';
+  document.getElementById('rvbtn').disabled=false;
+  document.getElementById('typi').classList.remove('show');
+  document.getElementById('cinput').value='';
+}
+
+function leaveChat(){
+  if(!confirm('Leave this chat?'))return;
+  if(socket)socket.emit('leave_chat');
+  const app=document.getElementById('app'),chat=document.getElementById('chat');
+  chat.classList.add('out');app.classList.remove('hidden');app.classList.remove('out');
+  setTimeout(()=>chat.classList.add('hidden'),380);
+  switchTab('search');
+}
+
+// SEND MESSAGE
+function sendMsg(){
+  const inp=document.getElementById('cinput');
+  const text=inp.value.trim();
+  if(!text)return;
+  addBubble('out',text);
+  if(socket)socket.emit('send_message',{text});
+  inp.value='';
+  clearTimeout(typTimer);
+  if(socket)socket.emit('stop_typing');
+}
+function onType(){
+  if(socket)socket.emit('typing');
+  clearTimeout(typTimer);
+  typTimer=setTimeout(()=>{if(socket)socket.emit('stop_typing');},1500);
+}
+function addBubble(dir,text){
+  const msgs=document.getElementById('cmsgs');
+  const typi=document.getElementById('typi');
+  const wrap=document.createElement('div');
+  wrap.className='bwrap '+dir;
+  wrap.innerHTML=`<div class="bubble">${text}</div>`;
+  msgs.insertBefore(wrap,typi);
+  curMsgs.push({dir,text});
+  scrollChat();
+  // Show reveal button only after 5+ messages
+  if(curMsgs.length>=5 && !iRevealed){
+    document.getElementById('rvbtn').style.display='';
+  }
+}
+function addSysMsg(text){
+  const msgs=document.getElementById('cmsgs');
+  const el=document.createElement('div');
+  el.className='sysmsg';el.textContent=text;
+  msgs.appendChild(el);scrollChat();
+}
+function scrollChat(){const m=document.getElementById('cmsgs');m.scrollTop=m.scrollHeight;}
+
+// REVEAL
+function showReveal(){
+  if(!username){
+    alert('Set your username muna sa Profile tab!');
+    const app=document.getElementById('app'),chat=document.getElementById('chat');
+    chat.classList.add('out');app.classList.remove('hidden');app.classList.remove('out');
+    setTimeout(()=>{chat.classList.add('hidden');switchTab('profile');},380);
+    return;
+  }
+  document.getElementById('mushow').textContent='@'+username;
+  document.getElementById('rvModal').classList.add('show');
+}
+function hideReveal(){document.getElementById('rvModal').classList.remove('show');}
+function confirmReveal(){
+  hideReveal();
+  iRevealed=true;
+  document.getElementById('rvbtn').disabled=true;
+  if(socket)socket.emit('reveal_username',{username});
+  addSysMsg('You revealed your identity: @'+username);
+  if(partnerRevealed)doSaveConvo(partnerUsername);
+}
+
+// SAVE CONVO TO SERVER (persistent)
+async function doSaveConvo(pUsername){
+  addSysMsg('Both revealed! Saving convo... ✅');
+  try{
+    await fetch('/api/convos/'+encodeURIComponent(userData.studentName),{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({partnerName:'@'+pUsername,msgs:[...curMsgs]})
+    });
+    await loadConvos();
+  }catch(e){console.log('save err',e);}
+  // Auto-navigate to messages tab after 1.5 seconds
+  setTimeout(()=>{
+    const chat=document.getElementById('chat');
+    const app=document.getElementById('app');
+    chat.classList.add('out');
+    app.classList.remove('hidden');app.classList.remove('out');
+    setTimeout(()=>chat.classList.add('hidden'),380);
+    switchTab('messages');
+  },1500);
+}
+
+// LOAD CONVOS FROM SERVER
+async function loadConvos(){
+  try{
+    const res=await fetch('/api/convos/'+encodeURIComponent(userData.studentName));
+    const data=await res.json();
+    renderConvos(data);
+  }catch(e){renderConvos([]);}
+}
+
+function renderConvos(list){
+  const el=document.getElementById('msgList');
+  if(!list||!list.length){
+    el.innerHTML='<div class="mempty"><div class="emicon">💬</div><div>No conversations yet.<br>Chat and reveal identity to save here!</div></div>';
+    return;
+  }
+  window._convos=list;
+  el.innerHTML=list.map((c,i)=>`
+    <div class="citem" onclick="openSavedChat(${i})">
+      <div class="cavatar">👤</div>
+      <div class="cinfo">
+        <div class="cname">${c.partnerName}</div>
+        <div class="cprev">${c.msgs&&c.msgs.length?c.msgs[c.msgs.length-1].text:'Saved chat'}</div>
+      </div>
+      <div class="cdate">${c.date||''}</div>
+    </div>
+  `).join('');
+}
+
+function openSavedChat(idx){
+  const c=window._convos&&window._convos[idx];
+  if(!c)return;
+  document.getElementById('scPartner').textContent=c.partnerName;
+  const scm=document.getElementById('scMsgs');
+  scm.innerHTML='';
+  if(c.msgs&&c.msgs.length){
+    c.msgs.forEach(m=>{
+      const wrap=document.createElement('div');
+      wrap.className='bwrap '+m.dir;
+      wrap.innerHTML=`<div class="bubble">${m.text}</div>`;
+      scm.appendChild(wrap);
+    });
+  } else {
+    scm.innerHTML='<div class="sysmsg">No messages saved.</div>';
+  }
+  const app=document.getElementById('app'),sc=document.getElementById('saved-chat');
+  app.classList.add('out');sc.classList.remove('hidden');
+  setTimeout(()=>app.classList.add('hidden'),380);
+  scm.scrollTop=scm.scrollHeight;
+}
+
+function closeSavedChat(){
+  const app=document.getElementById('app'),sc=document.getElementById('saved-chat');
+  sc.classList.add('out');app.classList.remove('hidden');app.classList.remove('out');
+  setTimeout(()=>sc.classList.add('hidden'),380);
+}
+</script>
+</body>
+</html>
