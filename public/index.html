@@ -464,7 +464,7 @@ function initSocket(){
 
 // SEARCH
 function startSearch(){
-  if(!socket||!socket.connected){alert('Connection error. Refresh the page!');return;}
+  if(!socket||!socket.connected)
   switchTab('searching');
   socket.emit('find_match',userData);
 }
