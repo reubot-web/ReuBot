@@ -2,168 +2,186 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ReuBot</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="/socket.io/socket.io.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{--bg:#c9d9f0;--btn:#8aa8c8;--btn2:#7090b0;--text:#1a2a3a;--sub:#4a6a8a;--acc:#5a8ab0;--cbg:#8aa8c8;--bin:#e8eff8;--bout:#ffffff;--green:#4caf8a;--red:#e05a5a;--nav:#7a9fc0;--nh:68px}
-body{font-family:'Nunito',sans-serif;background:var(--bg);display:flex;justify-content:center;align-items:center;min-height:100vh;overflow:hidden}
-.phone{width:100%;max-width:390px;height:100dvh;max-height:844px;position:relative;overflow:hidden;background:var(--bg)}
-.screen{position:absolute;inset:0;display:flex;flex-direction:column;transition:transform .38s cubic-bezier(.77,0,.18,1),opacity .38s}
-.screen.hidden{transform:translateX(100%);opacity:0;pointer-events:none}
-.screen.out{transform:translateX(-100%);opacity:0;pointer-events:none}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#c9d9f0;--panel:#b8cce0;--card:#d8e6f4;--btn:#8aa8c8;--btn2:#7090b0;
+  --text:#1a2a3a;--sub:#4a6a8a;--accent:#5a8ab0;
+  --chat-bg:#8aa8c8;--bin:#e8eff8;--bout:#ffffff;
+  --green:#4caf8a;--red:#e05a5a;--nav:#7a9ab8;
+}
+body{font-family:'Nunito',sans-serif;background:#888;display:flex;justify-content:center;align-items:center;min-height:100vh;overflow:hidden;}
+.phone{width:100%;max-width:390px;height:100dvh;max-height:844px;position:relative;overflow:hidden;background:var(--bg);display:flex;flex-direction:column;}
 
-/* SPLASH */
-#splash{background:var(--bg);justify-content:center;align-items:center;gap:16px;z-index:99}
-.splash-logo{animation:pulse 2s infinite}
-.splash-logo img{width:110px;height:110px;object-fit:contain}
-.splash-title{font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--text);letter-spacing:4px}
+/* SCREENS */
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;transition:transform .4s cubic-bezier(.77,0,.18,1),opacity .4s;}
+.screen.hidden{transform:translateX(100%);opacity:0;pointer-events:none;}
+.screen.gone{transform:translateX(-100%);opacity:0;pointer-events:none;}
+
+/* NAV BAR */
+.nav-bar{position:absolute;bottom:0;left:0;right:0;height:72px;background:var(--nav);display:flex;justify-content:space-around;align-items:center;z-index:200;flex-shrink:0;}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;opacity:.6;transition:opacity .2s;background:none;border:none;color:white;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;padding:8px 16px;}
+.nav-btn.active{opacity:1;}
+.nav-btn svg{width:26px;height:26px;stroke:white;fill:none;stroke-width:2;}
+
+/* SHARED */
+.page-header{background:var(--bg);padding:18px 20px 14px;border-bottom:1.5px solid rgba(255,255,255,.5);flex-shrink:0;}
+.page-title{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--text);letter-spacing:2px;text-align:center;}
+.page-title-dark{background:var(--panel);}
+.main-btn{padding:16px 32px;background:var(--btn);border:none;border-radius:14px;font-family:'Nunito',sans-serif;font-size:17px;font-weight:800;color:white;cursor:pointer;text-decoration:underline;transition:background .2s;box-shadow:0 4px 14px rgba(0,0,0,.14);width:100%;max-width:260px;}
+.main-btn:hover{background:var(--btn2);}
+.card-box{background:var(--panel);border-radius:20px;padding:18px 20px;}
+.field-input{width:100%;padding:14px 16px;border-radius:14px;border:2px solid transparent;background:white;font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;color:var(--text);outline:none;transition:border-color .2s;box-shadow:0 2px 8px rgba(0,0,0,.07);}
+.field-input:focus{border-color:var(--accent);}
+.field-input.err{border-color:var(--red);}
+.field-label{font-size:13px;font-weight:800;color:var(--text);margin-bottom:6px;}
+.autocomplete-wrap{position:relative;}
+.auto-list{position:absolute;top:100%;left:0;right:0;background:white;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.15);max-height:180px;overflow-y:auto;z-index:300;display:none;}
+.auto-list.show{display:block;}
+.auto-item{padding:11px 14px;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;border-bottom:1px solid #f0f5fc;}
+.auto-item:hover{background:var(--bg);}
+.err-msg{font-size:13px;color:var(--red);font-weight:700;display:none;padding:8px 12px;background:rgba(224,90,90,.08);border-radius:10px;}
+.err-msg.show{display:block;}
+.spinner{width:56px;height:56px;border:4px solid rgba(138,168,200,.3);border-top-color:var(--accent);border-radius:50%;animation:spin .9s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 
-/* VERIFY */
-#verify{background:var(--bg);z-index:10}
-.vbody{flex:1;padding:36px 28px 20px;display:flex;flex-direction:column;gap:20px;overflow-y:auto}
-.vtitle{font-family:'Bebas Neue',sans-serif;font-size:46px;color:var(--text);letter-spacing:2px}
-.vsub{font-size:15px;color:var(--sub);font-weight:700;margin-top:-10px}
-.fg{display:flex;flex-direction:column;gap:7px}
-.flabel{font-size:13px;font-weight:800;color:var(--text)}
-.finput{width:100%;padding:15px 18px;border-radius:16px;border:2px solid transparent;background:white;font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;color:var(--text);outline:none;transition:border-color .2s;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-.finput:focus{border-color:var(--acc)}
-.finput.err{border-color:var(--red)}
-.acwrap{position:relative}
-.aclist{position:absolute;top:100%;left:0;right:0;background:white;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.15);max-height:180px;overflow-y:auto;z-index:100;display:none}
-.aclist.show{display:block}
-.acitem{padding:12px 16px;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;border-bottom:1px solid #f0f0f0}
-.acitem:last-child{border-bottom:none}
-.acitem:hover{background:var(--bg)}
-.errmsg{font-size:13px;color:var(--red);font-weight:700;display:none;padding:8px 12px;background:rgba(224,90,90,.1);border-radius:10px}
-.errmsg.show{display:block}
-.mbtn{padding:17px;background:var(--btn);border:none;border-radius:16px;font-family:'Nunito',sans-serif;font-size:17px;font-weight:800;color:white;cursor:pointer;transition:background .2s,transform .1s;box-shadow:0 4px 16px rgba(0,0,0,.15);width:100%}
-.mbtn:hover{background:var(--btn2)}.mbtn:active{transform:scale(.97)}
+/* ======= SPLASH ======= */
+#splash{background:var(--bg);justify-content:center;align-items:center;gap:16px;}
+.splash-logo{font-size:64px;animation:pulse 2s infinite;}
+.splash-title{font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--text);letter-spacing:4px;}
 
-/* GENDER */
-#gender{background:var(--bg);justify-content:center;align-items:center;gap:28px;padding:40px 28px;text-align:center;z-index:10}
-.chk{width:76px;height:76px;background:var(--btn);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:34px;animation:popIn .4s cubic-bezier(.17,.67,.35,1.3)}
-@keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
-.gtitle{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--text);letter-spacing:2px}
-.gsub{font-size:15px;color:var(--sub);font-weight:600;margin-top:-8px}
-.gbtns{display:flex;gap:20px}
-.gbtn{width:138px;height:158px;background:white;border-radius:24px;border:2px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:var(--text);box-shadow:0 4px 16px rgba(0,0,0,.1);transition:all .2s}
-.gbtn:hover{border-color:var(--acc);transform:translateY(-2px)}
-.gbtn .em{font-size:50px}
+/* ======= INTRO ======= */
+#intro{background:var(--bg);}
+.intro-header{padding:20px 24px 14px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.5);}
+.intro-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 32px;text-align:center;gap:20px;}
+.intro-body p{font-size:17px;line-height:1.65;color:var(--text);font-weight:600;}
+.intro-body p+p{font-size:15px;color:var(--sub);}
 
-/* APP */
-#app{background:var(--bg);z-index:5}
-.ahdr{padding:16px 24px 12px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.5);flex-shrink:0}
-.ahdr img{width:36px;height:36px;object-fit:contain}
-.abrand{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--text);letter-spacing:2px}
-.tcontent{flex:1;overflow:hidden;position:relative}
-.tpane{position:absolute;inset:0;overflow-y:auto;display:none;flex-direction:column}
-.tpane.active{display:flex}
+/* ======= VERIFY ======= */
+#verify{background:var(--bg);}
+.verify-body{flex:1;padding:32px 24px 100px;display:flex;flex-direction:column;gap:20px;overflow-y:auto;}
+.v-title{font-family:'Bebas Neue',sans-serif;font-size:44px;color:var(--text);letter-spacing:2px;}
+.v-sub{font-size:15px;color:var(--sub);font-weight:700;margin-top:-12px;}
 
-/* SEARCH TAB */
-#tab-search{align-items:center;justify-content:center;gap:24px;text-align:center;padding:40px 28px}
-.shero{font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--text);letter-spacing:3px;line-height:1.05}
-.ssub{font-size:15px;color:var(--sub);font-weight:600;max-width:260px;line-height:1.5}
-.sbig{width:130px;height:130px;background:var(--btn);border:none;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:white;box-shadow:0 8px 28px rgba(90,138,176,.45);transition:all .2s}
-.sbig:hover{transform:scale(1.05)}.sbig:active{transform:scale(.96)}
-.si{font-size:42px}
-.opill{background:white;border-radius:20px;padding:9px 20px;font-size:13px;font-weight:800;color:var(--acc);box-shadow:0 2px 10px rgba(0,0,0,.08)}
+/* ======= PROFILE SETUP ======= */
+#profileSetup{background:var(--bg);}
+.profile-setup-body{flex:1;padding:24px 24px 100px;display:flex;flex-direction:column;gap:18px;overflow-y:auto;}
+.avatar-pick{display:flex;flex-direction:column;align-items:center;gap:10px;}
+.avatar-circle{width:90px;height:90px;border-radius:50%;background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:48px;cursor:pointer;border:3px solid white;box-shadow:0 4px 16px rgba(0,0,0,.1);}
+.avatar-edit-lbl{font-size:13px;color:var(--sub);font-weight:700;}
+.gender-row{display:flex;gap:12px;}
+.gender-opt{flex:1;padding:14px 8px;border-radius:14px;border:2px solid var(--panel);background:white;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:var(--sub);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s;}
+.gender-opt.sel{border-color:var(--accent);color:var(--accent);background:#edf4fb;}
+.gender-opt .g-emoji{font-size:28px;}
 
-/* SEARCHING */
-#tab-searching{align-items:center;justify-content:center;gap:24px;text-align:center;padding:40px 28px}
-.spin{width:60px;height:60px;border:4px solid rgba(138,168,200,.3);border-top-color:var(--acc);border-radius:50%;animation:spin .9s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.stitle{font-family:'Bebas Neue',sans-serif;font-size:34px;color:var(--text);letter-spacing:2px}
-.ssub2{font-size:14px;color:var(--sub);font-weight:600}
-.cbtn{background:none;border:2px solid var(--btn);border-radius:12px;padding:10px 28px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:var(--sub);cursor:pointer}
+/* ======= MAIN APP WRAPPER ======= */
+#app{background:var(--bg);display:flex;flex-direction:column;}
 
-/* MESSAGES TAB */
-#tab-messages{padding:20px;gap:10px}
-.ttitle{font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--text);letter-spacing:2px;padding:0 4px 4px;flex-shrink:0}
-.mempty{text-align:center;padding:60px 20px;color:var(--sub);font-weight:600;font-size:15px;display:flex;flex-direction:column;align-items:center;gap:12px}
-.emicon{font-size:48px;opacity:.5}
-.citem{background:white;border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 10px rgba(0,0,0,.07);cursor:pointer;transition:transform .15s;flex-shrink:0}
-.citem:hover{transform:translateX(3px)}
-.cavatar{width:48px;height:48px;border-radius:50%;background:var(--btn);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-.cinfo{flex:1;min-width:0}
-.cname{font-size:15px;font-weight:800;color:var(--text)}
-.cprev{font-size:13px;color:var(--sub);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-.cdate{font-size:11px;color:var(--sub);font-weight:700;flex-shrink:0}
+/* ======= SEARCH TAB (anonymous) ======= */
+#tabSearch{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.search-idle{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:32px;text-align:center;}
+.search-idle .big-emoji{font-size:72px;animation:pulse 2s infinite;}
+.search-idle h2{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--text);letter-spacing:2px;}
+.search-idle p{font-size:15px;color:var(--sub);font-weight:600;line-height:1.6;}
+.search-searching{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:32px;text-align:center;}
+.search-searching h2{font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--text);}
+.search-searching p{font-size:14px;color:var(--sub);font-weight:600;}
+.cancel-link{font-size:14px;color:var(--sub);font-weight:700;text-decoration:underline;cursor:pointer;background:none;border:none;font-family:'Nunito',sans-serif;}
 
-/* PROFILE TAB */
-#tab-profile{padding:24px;gap:16px}
-.pcard{background:white;border-radius:24px;padding:28px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;box-shadow:0 4px 16px rgba(0,0,0,.08);flex-shrink:0}
-.pavatar{width:80px;height:80px;border-radius:50%;background:var(--btn);display:flex;align-items:center;justify-content:center;font-size:36px}
-.pname{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--text);letter-spacing:1px}
-.pbatch{font-size:13px;color:var(--sub);font-weight:700;background:var(--bg);padding:5px 14px;border-radius:20px}
-.slabel{font-size:12px;font-weight:800;color:var(--sub);letter-spacing:.5px}
-.uwrap{display:flex;gap:10px;align-items:center}
-.uinput{flex:1;padding:14px 16px;border-radius:14px;border:2px solid var(--bg);background:var(--bg);font-family:'Nunito',sans-serif;font-size:15px;font-weight:700;color:var(--text);outline:none;transition:border-color .2s}
-.uinput:focus{border-color:var(--acc);background:white}
-.svbtn{padding:14px 20px;background:var(--btn);border:none;border-radius:14px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:white;cursor:pointer;white-space:nowrap}
-.svbtn:hover{background:var(--btn2)}
-.toast{font-size:13px;color:var(--green);font-weight:800;display:none}
-.toast.show{display:block}
-.pirow{display:flex;justify-content:space-between;align-items:center;background:var(--bg);border-radius:14px;padding:12px 16px;flex-shrink:0}
-.ilabel{font-size:13px;font-weight:700;color:var(--sub)}
-.ival{font-size:14px;font-weight:800;color:var(--text);text-align:right;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Anon chat UI */
+.anon-chat{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.anon-chat-header{background:var(--bg);padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.5);}
+.partner-badge{background:var(--panel);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:6px;}
+.partner-badge .dot-online{width:8px;height:8px;background:var(--green);border-radius:50%;}
+.reveal-btn{margin-left:auto;background:var(--btn);border:none;border-radius:10px;padding:8px 14px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;color:white;cursor:pointer;}
+.leave-btn{background:none;border:none;font-size:20px;cursor:pointer;color:var(--sub);padding:4px;}
+.chat-messages{flex:1;background:var(--chat-bg);padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
+.sys-msg{text-align:center;font-size:12px;font-weight:700;color:rgba(255,255,255,.9);background:rgba(255,255,255,.2);padding:7px 14px;border-radius:20px;align-self:center;}
+.bwrap{display:flex;flex-direction:column;max-width:78%;}
+.bwrap.out{align-self:flex-end;align-items:flex-end;}
+.bwrap.in{align-self:flex-start;}
+.bubble{padding:11px 15px;border-radius:20px;font-size:15px;font-weight:600;line-height:1.4;color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.1);}
+.bwrap.out .bubble{background:var(--bout);border-bottom-right-radius:4px;}
+.bwrap.in .bubble{background:var(--bin);border-bottom-left-radius:4px;}
+.btime{font-size:11px;color:rgba(255,255,255,.7);font-weight:700;margin-top:3px;padding:0 4px;}
+.typing-row{display:none;align-self:flex-start;}
+.typing-row.show{display:flex;}
+.typing-dots{background:var(--bin);border-radius:20px;border-bottom-left-radius:4px;padding:11px 15px;display:flex;gap:4px;align-items:center;}
+.dot{width:7px;height:7px;background:var(--sub);border-radius:50%;animation:db 1.2s infinite;}
+.dot:nth-child(2){animation-delay:.2s;}.dot:nth-child(3){animation-delay:.4s;}
+@keyframes db{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+.chat-input-row{background:var(--bg);padding:10px 14px;display:flex;gap:8px;align-items:center;flex-shrink:0;}
+.chat-input{flex:1;padding:13px 16px;border-radius:22px;border:none;background:white;font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;color:var(--text);outline:none;box-shadow:0 2px 8px rgba(0,0,0,.07);}
+.send-btn{width:46px;height:46px;background:var(--btn);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s,transform .1s;flex-shrink:0;}
+.send-btn:hover{background:var(--btn2);}
+.send-btn:active{transform:scale(.92);}
+.send-btn svg{width:18px;height:18px;fill:white;}
 
-/* BOTTOM NAV */
-.bnav{height:var(--nh);background:var(--nav);display:flex;justify-content:space-around;align-items:center;flex-shrink:0}
-.nbtn{flex:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:none;border:none;cursor:pointer;opacity:.55;transition:opacity .2s}
-.nbtn.active{opacity:1}
-.nbtn svg{width:26px;height:26px;stroke:white;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.ndot{width:5px;height:5px;background:white;border-radius:50%;opacity:0;transition:opacity .2s}
-.nbtn.active .ndot{opacity:1}
+/* Reveal modal */
+.modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:400;display:none;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:white;border-radius:24px;padding:28px 24px;width:calc(100% - 48px);max-width:320px;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;}
+.modal-box h3{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--text);letter-spacing:1px;}
+.modal-box p{font-size:14px;color:var(--sub);font-weight:600;line-height:1.5;}
+.modal-btns{display:flex;gap:10px;width:100%;}
+.modal-btn{flex:1;padding:14px;border:none;border-radius:14px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;}
+.modal-btn.yes{background:var(--btn);color:white;}
+.modal-btn.no{background:#f0f0f0;color:var(--sub);}
 
-/* ANON CHAT */
-#chat{background:var(--bg);z-index:20}
-.chdr{background:var(--bg);padding:14px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.5);flex-shrink:0}
-.cback{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text);padding:4px 8px 4px 0}
-.cavsm{width:40px;height:40px;border-radius:50%;background:var(--btn);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-.cinfob{flex:1}
-.cnamesm{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--text);letter-spacing:1px}
-.cstat{font-size:12px;color:var(--green);font-weight:700}
-.rvbtn{background:white;border:2px solid var(--btn);border-radius:12px;padding:7px 14px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;color:var(--acc);cursor:pointer;white-space:nowrap;transition:all .2s}
-.rvbtn:hover{background:var(--btn);color:white}
-.rvbtn:disabled{opacity:.4;cursor:default;background:white;color:var(--sub)}
-.cmsgs{flex:1;background:var(--cbg);padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
-.sysmsg{text-align:center;font-size:12px;font-weight:700;color:rgba(255,255,255,.9);background:rgba(255,255,255,.2);padding:7px 16px;border-radius:20px;align-self:center;max-width:90%}
-.bwrap{display:flex;flex-direction:column;max-width:78%}
-.bwrap.out{align-self:flex-end;align-items:flex-end}
-.bwrap.in{align-self:flex-start}
-.bubble{padding:11px 15px;border-radius:20px;font-size:15px;font-weight:600;line-height:1.4;color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.08)}
-.bwrap.out .bubble{background:var(--bout);border-bottom-right-radius:4px}
-.bwrap.in .bubble{background:var(--bin);border-bottom-left-radius:4px}
-.typi{align-self:flex-start;display:none}
-.typi.show{display:flex}
-.tdots{background:var(--bin);border-radius:20px;border-bottom-left-radius:4px;padding:11px 15px;display:flex;gap:4px;align-items:center}
-.dot{width:6px;height:6px;background:var(--sub);border-radius:50%;animation:db 1.2s infinite}
-.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
-@keyframes db{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
-.ciarea{background:var(--bg);padding:10px 14px;display:flex;gap:10px;align-items:center;flex-shrink:0}
-.cinput{flex:1;padding:13px 18px;border-radius:24px;border:none;background:white;font-family:'Nunito',sans-serif;font-size:15px;font-weight:600;color:var(--text);outline:none;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-.sndbtn{width:46px;height:46px;background:var(--btn);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s,transform .1s;flex-shrink:0}
-.sndbtn:hover{background:var(--btn2)}.sndbtn:active{transform:scale(.92)}
-.sndbtn svg{width:19px;height:19px;fill:white;stroke:none}
+/* ======= BATCHMATES TAB ======= */
+#tabBatchmates{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.bm-list{flex:1;overflow-y:auto;padding-bottom:72px;}
+.bm-item{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.4);cursor:pointer;transition:background .15s;}
+.bm-item:hover{background:rgba(255,255,255,.2);}
+.bm-avatar{width:56px;height:56px;border-radius:16px;background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;}
+.bm-info{flex:1;min-width:0;}
+.bm-name{font-size:16px;font-weight:800;color:var(--text);text-decoration:underline;}
+.bm-last{font-size:13px;color:var(--sub);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+.bm-chat-icon{flex-shrink:0;opacity:.5;}
+.bm-chat-icon svg{width:32px;height:32px;stroke:var(--sub);fill:none;stroke-width:1.5;}
+.bm-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px;text-align:center;color:var(--sub);}
+.bm-empty .big-emoji{font-size:56px;}
+.bm-empty p{font-size:15px;font-weight:600;line-height:1.6;}
 
-/* SAVED CHAT */
-#saved-chat{background:var(--bg);z-index:25}
+/* Named chat screen */
+#namedChat{background:var(--bg);}
+.named-header{background:var(--bg);padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.5);}
+.back-btn{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text);padding:4px;}
+.named-info{flex:1;}
+.named-name{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--text);letter-spacing:1px;}
+.named-status{font-size:12px;color:var(--green);font-weight:700;}
 
-/* MODAL */
-.moverlay{position:absolute;inset:0;background:rgba(26,42,58,.5);display:none;align-items:flex-end;z-index:50}
-.moverlay.show{display:flex}
-.msheet{background:white;border-radius:28px 28px 0 0;padding:28px 28px 44px;width:100%;display:flex;flex-direction:column;gap:16px;animation:su .3s cubic-bezier(.17,.67,.35,1.1)}
-@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.mtitle{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--text);letter-spacing:1px}
-.msub{font-size:14px;color:var(--sub);font-weight:600;line-height:1.5;margin-top:-8px}
-.mushow{background:var(--bg);border-radius:14px;padding:14px 18px;font-size:18px;font-weight:800;color:var(--acc);text-align:center}
-.mbtns{display:flex;gap:12px}
-.mok{flex:1;padding:15px;background:var(--btn);border:none;border-radius:14px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:white;cursor:pointer}
-.mno{flex:1;padding:15px;background:var(--bg);border:none;border-radius:14px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;color:var(--sub);cursor:pointer}
+/* ======= SETTINGS TAB ======= */
+#tabSettings{flex:1;display:flex;flex-direction:column;overflow-y:auto;padding-bottom:80px;}
+.settings-avatar-wrap{display:flex;flex-direction:column;align-items:center;padding:28px 20px 16px;gap:10px;}
+.settings-avatar{width:96px;height:96px;border-radius:50%;background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:52px;position:relative;cursor:pointer;}
+.settings-name-row{display:flex;align-items:center;gap:8px;}
+.settings-name{font-size:22px;font-weight:800;color:var(--text);}
+.edit-badge{background:white;border-radius:20px;padding:4px 12px;font-size:13px;font-weight:800;color:var(--sub);border:1.5px solid var(--panel);cursor:pointer;display:flex;align-items:center;gap:4px;}
+.settings-gender{font-size:14px;color:var(--sub);font-weight:600;}
+.about-box{margin:0 16px 12px;background:var(--panel);border-radius:18px;padding:16px 18px;cursor:pointer;}
+.about-box h4{font-size:16px;font-weight:800;color:var(--text);margin-bottom:6px;}
+.about-box p{font-size:14px;color:var(--sub);font-weight:600;line-height:1.5;}
+.settings-menu-item{display:flex;align-items:center;gap:14px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.4);cursor:pointer;}
+.settings-menu-item svg{width:28px;height:28px;stroke:var(--text);fill:none;stroke-width:1.8;flex-shrink:0;}
+.settings-menu-item span{font-size:16px;font-weight:700;color:var(--text);}
+
+/* Account Settings screen */
+#accountSettings{background:var(--bg);}
+.acct-body{flex:1;padding:24px;display:flex;flex-direction:column;gap:16px;}
+.delete-btn{background:none;border:none;font-family:'Nunito',sans-serif;font-size:17px;font-weight:800;color:var(--red);cursor:pointer;text-align:center;padding:16px;}
+
+/* About screen */
+#aboutScreen{background:var(--bg);}
+.about-body{flex:1;padding:24px 20px;overflow-y:auto;}
+.about-section-title{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--text);letter-spacing:1px;margin-bottom:10px;}
+.about-body p{font-size:14px;color:var(--text);font-weight:600;line-height:1.7;margin-bottom:16px;}
 </style>
 </head>
 <body>
@@ -171,162 +189,248 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);display:flex;justify-c
 
 <!-- SPLASH -->
 <div class="screen" id="splash">
-  <div class="splash-logo"><img id="logoSplash" src="/logo.png" alt="ReuBot"></div>
+  <div class="splash-logo">🔗</div>
   <div class="splash-title">ReuBot</div>
+</div>
+
+<!-- INTRO -->
+<div class="screen hidden" id="intro">
+  <div class="intro-header">
+    <span style="font-size:32px">🔗</span>
+    <span style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--text);letter-spacing:2px">ReuBot</span>
+  </div>
+  <div class="intro-body">
+    <p>Reunion Bot lets you reunite with your High School batch mates in Botolan National High School.</p>
+    <p>We randomly connect you to a batch mate who is also online — anonymously!</p>
+    <button class="main-btn" onclick="showScreen('intro','verify')">Proceed</button>
+  </div>
 </div>
 
 <!-- VERIFY -->
 <div class="screen hidden" id="verify">
-  <div class="vbody">
-    <div><div class="vtitle">Batch Verify</div><div class="vsub">reconnect with your classmates!</div></div>
-    <div class="fg">
-      <div class="flabel">School Year</div>
-      <input class="finput" id="schoolYear" value="2023-2024" readonly>
-    </div>
-    <div class="fg">
-      <div class="flabel">Your Name</div>
-      <div class="acwrap">
-        <input class="finput" id="studentName" placeholder="Type your last name..." autocomplete="off"
-          oninput="filterStudents(this.value)" onblur="hideAC('acStudents')" onfocus="filterStudents(this.value)">
-        <div class="aclist" id="acStudents"></div>
+  <div class="verify-body">
+    <div><div class="v-title">Batch Verify</div><div class="v-sub">reconnect with your classmates!</div></div>
+    <div><div class="field-label">School Year</div><input class="field-input" id="syInput" value="2023-2024" readonly></div>
+    <div><div class="field-label">Your Name</div>
+      <div class="autocomplete-wrap">
+        <input class="field-input" id="snInput" placeholder="Type your last name..." autocomplete="off"
+          oninput="filterStu(this.value)" onblur="hideAL('stuList')" onfocus="filterStu(this.value)">
+        <div class="auto-list" id="stuList"></div>
       </div>
     </div>
-    <div class="fg">
-      <div class="flabel">Adviser Name</div>
-      <div class="acwrap">
-        <input class="finput" id="adviserName" placeholder="Type adviser name..." autocomplete="off"
-          oninput="filterAdvisers(this.value)" onblur="hideAC('acAdvisers')" onfocus="filterAdvisers(this.value)">
-        <div class="aclist" id="acAdvisers"></div>
+    <div><div class="field-label">Adviser Name</div>
+      <div class="autocomplete-wrap">
+        <input class="field-input" id="advInput" placeholder="Type adviser's name..." autocomplete="off"
+          oninput="filterAdv(this.value)" onblur="hideAL('advList')" onfocus="filterAdv(this.value)">
+        <div class="auto-list" id="advList"></div>
       </div>
     </div>
-    <div class="errmsg" id="errMsg"></div>
-    <button class="mbtn" onclick="doVerify()">Verify Batch</button>
+    <div class="err-msg" id="verifyErr">❌ Invalid details.</div>
+    <button class="main-btn" onclick="doVerify()">Verify Batch</button>
   </div>
 </div>
 
-<!-- GENDER -->
-<div class="screen hidden" id="gender">
-  <div class="chk">✓</div>
-  <div class="gtitle">Now you are ready!</div>
-  <div class="gsub">Choose your gender and start chatting.</div>
-  <div class="gbtns">
-    <button class="gbtn" onclick="setGender('man')"><span class="em">👦</span>I'm a man</button>
-    <button class="gbtn" onclick="setGender('woman')"><span class="em">👧</span>I'm a woman</button>
+<!-- PROFILE SETUP -->
+<div class="screen hidden" id="profileSetup">
+  <div class="page-header"><div class="page-title">Profile</div></div>
+  <div class="profile-setup-body">
+    <div class="avatar-pick">
+      <div class="avatar-circle" id="setupAvatar" onclick="pickEmoji()">🙂</div>
+      <div class="avatar-edit-lbl">Edit Icon</div>
+    </div>
+    <div><div class="field-label">Nickname</div>
+      <div class="card-box" style="padding:14px 16px;">
+        <input class="field-input" id="nickInput" placeholder="Write your nickname" style="box-shadow:none;padding:6px 0;border:none;background:transparent;font-size:15px;">
+      </div>
+    </div>
+    <div><div class="field-label">Gender</div>
+      <div class="card-box">
+        <div class="gender-row">
+          <button class="gender-opt" id="gMale" onclick="pickGender('male')"><span class="g-emoji">👦</span>Male</button>
+          <button class="gender-opt" id="gFemale" onclick="pickGender('female')"><span class="g-emoji">👧</span>Female</button>
+          <button class="gender-opt" id="gOther" onclick="pickGender('prefer not to say')"><span class="g-emoji">🤍</span><span style="font-size:11px">Prefer not</span></button>
+        </div>
+      </div>
+    </div>
+    <button class="main-btn" onclick="saveProfile()">Start Chatting →</button>
   </div>
 </div>
 
 <!-- MAIN APP -->
 <div class="screen hidden" id="app">
-  <div class="ahdr">
-    <img src="/logo.png" alt="ReuBot">
-    <div class="abrand">ReuBot</div>
-  </div>
-  <div class="tcontent">
-    <div class="tpane active" id="tab-search">
-      <div class="shero">Find a<br>Batch Mate</div>
-      <div class="ssub">Tap to anonymously connect with a 2023-2024 classmate who's online!</div>
-      <button class="sbig" onclick="startSearch()">
-        <span class="si">🔍</span>Start Chat
-      </button>
-      <div class="opill">👥 Ready to connect</div>
+
+  <!-- TAB: SEARCH (anonymous) -->
+  <div id="tabSearch" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+    <div class="page-header page-title-dark"><div class="page-title">Anonymous Chat</div></div>
+
+    <!-- Idle -->
+    <div class="search-idle" id="searchIdle">
+      <div class="big-emoji">🔍</div>
+      <h2>Find a Batch Mate</h2>
+      <p>Get randomly connected to a fellow Botolan NHS batch 2023-2024 classmate. They won't know who you are!</p>
+      <button class="main-btn" onclick="startAnon()">Start Chatting</button>
     </div>
-    <div class="tpane" id="tab-searching">
-      <div class="spin"></div>
-      <div class="stitle">Finding a<br>Batch Mate...</div>
-      <div class="ssub2">Waiting for someone online 👀</div>
-      <button class="cbtn" onclick="cancelSearch()">Cancel</button>
+
+    <!-- Searching -->
+    <div class="search-searching" id="searchSearching" style="display:none;">
+      <div class="spinner"></div>
+      <h2>Searching...</h2>
+      <p>Looking for a batch mate who's online 👀</p>
+      <button class="cancel-link" onclick="cancelAnon()">Cancel</button>
     </div>
-    <div class="tpane" id="tab-messages">
-      <div class="ttitle">Messages</div>
-      <div id="msgList"><div class="mempty"><div class="emicon">💬</div><div>No conversations yet.<br>Chat anonymously then reveal identity to save here!</div></div></div>
-    </div>
-    <div class="tpane" id="tab-profile">
-      <div class="ttitle">Profile</div>
-      <div class="pcard">
-        <div class="pavatar" id="pavatar">👤</div>
-        <div class="pname" id="pname">—</div>
-        <div class="pbatch">Batch 2023–2024</div>
-      </div>
-      <div class="fg">
-        <div class="slabel">SET USERNAME (for reveal identity)</div>
-        <div class="uwrap">
-          <input class="uinput" id="uinput" placeholder="e.g. razzel2024" maxlength="20">
-          <button class="svbtn" onclick="saveUsername()">Save</button>
+
+    <!-- Anon Chat -->
+    <div class="anon-chat" id="anonChat" style="display:none;flex:1;flex-direction:column;">
+      <div class="anon-chat-header">
+        <div class="partner-badge">
+          <div class="dot-online"></div>
+          <span id="partnerGenderBadge">Anonymous</span>
         </div>
-        <div class="toast" id="toast">✅ Username saved!</div>
+        <button class="reveal-btn" onclick="openRevealModal()">Reveal Name 👋</button>
+        <button class="leave-btn" onclick="leaveAnon()">✕</button>
       </div>
-      <div class="fg">
-        <div class="slabel">YOUR INFO</div>
-        <div class="pirow"><div class="ilabel">Full Name</div><div class="ival" id="iname">—</div></div>
-        <div class="pirow"><div class="ilabel">Adviser</div><div class="ival" id="iadviser">—</div></div>
-        <div class="pirow"><div class="ilabel">Gender</div><div class="ival" id="igender">—</div></div>
+      <div class="chat-messages" id="anonMessages">
+        <div class="sys-msg">Connected! Say hi 👋</div>
+      </div>
+      <div class="typing-row" id="anonTyping"><div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="anonInput" placeholder="Type a message..." oninput="anonTypingEvt()" onkeydown="if(event.key==='Enter')sendAnon()">
+        <button class="send-btn" onclick="sendAnon()"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></button>
       </div>
     </div>
   </div>
-  <div class="bnav">
-    <button class="nbtn active" id="nav-search" onclick="switchTab('search')">
-      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <div class="ndot"></div>
+
+  <!-- TAB: BATCHMATES (named messages) -->
+  <div id="tabBatchmates" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+    <div class="page-header"><div class="page-title">Batchmates</div></div>
+    <div class="bm-list" id="bmList">
+      <div class="bm-empty" id="bmEmpty">
+        <div class="big-emoji">💬</div>
+        <p>No connections yet.<br>Use anonymous chat and reveal your name to start a convo!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: SETTINGS/PROFILE -->
+  <div id="tabSettings" style="display:none;flex:1;flex-direction:column;">
+    <div class="page-header"><div class="page-title">Settings</div></div>
+    <div class="settings-avatar-wrap">
+      <div class="settings-avatar" id="settingsAvatar">🙂</div>
+      <div class="settings-name-row">
+        <div class="settings-name" id="settingsName">—</div>
+        <div class="edit-badge" onclick="openEditProfile()">✏️ EDIT</div>
+      </div>
+      <div class="settings-gender" id="settingsGender">—</div>
+    </div>
+    <div class="about-box" onclick="openAboutMe()">
+      <h4>About Me ✏️</h4>
+      <p id="settingsAbout">Add a few words about yourself to interest your partner</p>
+    </div>
+    <div class="settings-menu-item" onclick="openAcctSettings()">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      <span>Account Settings</span>
+    </div>
+    <div class="settings-menu-item" onclick="showScreen('app','aboutScreen')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+      <span>About</span>
+    </div>
+  </div>
+
+  <!-- Bottom nav -->
+  <div class="nav-bar">
+    <button class="nav-btn active" id="navSearch" onclick="switchTab('Search')">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+      Search
     </button>
-    <button class="nbtn" id="nav-messages" onclick="switchTab('messages')">
-      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      <div class="ndot"></div>
+    <button class="nav-btn" id="navBatchmates" onclick="switchTab('Batchmates')">
+      <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Batchmates
     </button>
-    <button class="nbtn" id="nav-profile" onclick="switchTab('profile')">
-      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <div class="ndot"></div>
+    <button class="nav-btn" id="navSettings" onclick="switchTab('Settings')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
     </button>
   </div>
 </div>
 
-<!-- ANON CHAT -->
-<div class="screen hidden" id="chat">
-  <div class="chdr">
-    <button class="cback" onclick="leaveChat()">←</button>
-    <div class="cavsm">🔗</div>
-    <div class="cinfob">
-      <div class="cnamesm" id="chatPartner">Anonymous</div>
-      <div class="cstat" id="chatStat">• Online</div>
+<!-- NAMED CHAT SCREEN -->
+<div class="screen hidden" id="namedChat">
+  <div class="named-header">
+    <button class="back-btn" onclick="showScreen('namedChat','app')">←</button>
+    <div class="named-info">
+      <div class="named-name" id="namedChatName">Batch mate</div>
+      <div class="named-status">• Online</div>
     </div>
-    <button class="rvbtn" id="rvbtn" onclick="showReveal()" style="display:none">Reveal Identity</button>
   </div>
-  <div class="cmsgs" id="cmsgs"></div>
-  <div class="typi" id="typi"><div class="tdots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
-  <div class="ciarea">
-    <input class="cinput" id="cinput" placeholder="Type a message..."
-      oninput="onType()" onkeydown="if(event.key==='Enter')sendMsg()">
-    <button class="sndbtn" onclick="sendMsg()">
-      <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
-    </button>
+  <div class="chat-messages" id="namedMessages" style="background:var(--chat-bg);flex:1;padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;">
+    <div class="sys-msg">You're now connected! Say hi 👋</div>
   </div>
-  <div class="moverlay" id="rvModal" onclick="if(event.target===this)hideReveal()">
-    <div class="msheet">
-      <div class="mtitle">Reveal Your Identity</div>
-      <div class="msub">Your batch mate will see your username. Kapag nag-reveal ka, makikita mo rin kung sino siya (kapag nag-reveal din siya).</div>
-      <div class="mushow" id="mushow">@username</div>
-      <div class="mbtns">
-        <button class="mno" onclick="hideReveal()">Cancel</button>
-        <button class="mok" onclick="confirmReveal()">Reveal ✓</button>
-      </div>
+  <div class="typing-row" id="namedTyping"><div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+  <div class="chat-input-row">
+    <input class="chat-input" id="namedInput" placeholder="Type a message..." oninput="namedTypingEvt()" onkeydown="if(event.key==='Enter')sendNamed()">
+    <button class="send-btn" onclick="sendNamed()"><svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg></button>
+  </div>
+</div>
+
+<!-- ACCOUNT SETTINGS SCREEN -->
+<div class="screen hidden" id="accountSettings">
+  <div class="page-header page-title-dark"><div class="page-title">Account Settings</div></div>
+  <div class="acct-body">
+    <div class="card-box">
+      <div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:8px;">Account Username ✏️</div>
+      <input class="field-input" id="usernameInput" placeholder="@yourusername" style="background:#edf4fb;">
+    </div>
+    <button class="main-btn" onclick="saveUsername()" style="margin-top:8px;">Save</button>
+  </div>
+  <button class="delete-btn">Delete Account</button>
+  <div style="height:16px;"></div>
+  <button class="cancel-link" onclick="showScreen('accountSettings','app')" style="align-self:center;margin-bottom:24px;">← Back</button>
+</div>
+
+<!-- ABOUT SCREEN -->
+<div class="screen hidden" id="aboutScreen">
+  <div class="page-header page-title-dark"><div class="page-title">About</div></div>
+  <div class="about-body">
+    <div class="about-section-title">About ReuBot</div>
+    <p>ReuBot is a batch-verified anonymous reconnection application developed as part of a Grade 12 STEM research project at Botolan National High School. The application is designed to help former classmates reconnect in a safe, private, and pressure-free environment.</p>
+    <p>The app allows users from the same verified school batch to communicate while giving them the option to remain anonymous. This feature aims to reduce social anxiety, fear of rejection, and hesitation that often prevent reconnection after graduation.</p>
+    <p>ReuBot prioritizes user privacy and security through batch verification and controlled interaction features. It is intended specifically for former students of Botolan National High School, Batch 2023–2024, and serves as a functional research prototype.</p>
+    <p>This application was developed for academic purposes only and is not intended for commercial use.</p>
+    <div class="about-section-title">Terms of Use</div>
+    <p>ReuBot is intended to be used respectfully and responsibly. Users are expected to communicate in a manner that is appropriate and considerate of others.</p>
+    <p>Any form of harassment, misuse of anonymity, or inappropriate behavior is not encouraged and may result in limited access to the application.</p>
+  </div>
+  <button class="cancel-link" onclick="showScreen('aboutScreen','app')" style="align-self:center;margin-bottom:24px;">← Back</button>
+</div>
+
+<!-- REVEAL MODAL -->
+<div class="modal-overlay" id="revealModal">
+  <div class="modal-box">
+    <div style="font-size:48px">👋</div>
+    <h3>Reveal Your Name?</h3>
+    <p>Your nickname and gender will be shared. If they accept, you'll both be added to Batchmates and can keep chatting!</p>
+    <div class="modal-btns">
+      <button class="modal-btn no" onclick="closeRevealModal()">Cancel</button>
+      <button class="modal-btn yes" onclick="confirmReveal()">Reveal!</button>
     </div>
   </div>
 </div>
 
-<!-- SAVED CHAT VIEW -->
-<div class="screen hidden" id="saved-chat">
-  <div class="chdr">
-    <button class="cback" onclick="closeSavedChat()">←</button>
-    <div class="cavsm">👤</div>
-    <div class="cinfob">
-      <div class="cnamesm" id="scPartner">—</div>
-      <div class="cstat" style="color:var(--sub)">• Saved conversation</div>
+<!-- INCOMING REVEAL MODAL -->
+<div class="modal-overlay" id="incomingRevealModal">
+  <div class="modal-box">
+    <div style="font-size:48px">🤝</div>
+    <h3 id="incomingRevealTitle">Someone wants to connect!</h3>
+    <p id="incomingRevealText">Your chat partner wants to reveal their name and add you to Batchmates.</p>
+    <div class="modal-btns">
+      <button class="modal-btn no" onclick="declineReveal()">Decline</button>
+      <button class="modal-btn yes" onclick="acceptReveal()">Accept!</button>
     </div>
   </div>
-  <div class="cmsgs" id="scMsgs"></div>
 </div>
 
-</div>
 <script>
+// =========== CLIENT DB (autocomplete) ===========
 const DB=[
   {adviser:"Karleen R. Dumangas",students:["AQUINO, RAZZEL V.","CAYABAN, CEDEE T.","DOLLETE, DANIEL LOUIS F.","DOMACENA, MICO ANGELO M.","ENRIQUEZ, THOMIE HENBERTSON C.","ESPAÑOL, JUNES IAN D.","LINGUAJE, REYNALDO JR. C.","QUILAB, JHAYE ANDRIE D.","RETIRADO, TJ CHARLS D.","TUGADE, ALFRED A.","VERMUG, EL CIV D.","VILLAREY, MATT EDREI D.","ANOCHE, ARIA MIEL D.","ANOCHE, DANA FAITH L.","AQUINO, MADILYN D.","ARIMAS, FAYE R.","BALUYOT, JHEMAICA C.","BASA, FRAN LUIZA E.","BAUTISTA, LEIGH ANN D.","BAYANI, JEYAN D.","BERGONIA, VENISSE NICOLE D.","DAYO, DAPHINE MAE D.","DELIQUIÑA, EUNICE S.","DITAPAT, AUBREY D.","ENCINARES, TIFFANY ZEA S.","FAMANILA, PHOEMELA ROSE A.","FEDERE, KRYSTLE ANNE D.","FERRER, JULIENNE NICOLE D.","FULGENCIO, KATHLEEN V.","GUIANG, KRYZ PAULA N.","LUNA, DONITA FE A.","MACAALAY, LOVELY MAY B.","OMAY, FLORENCE B.","QUINTO, JAZMINE JOY L.","RAMOS, DIANNE S.","RAYALA, EUREKA MAE V.","TAN, CLARISSE M.","VILLANUEVA, CHARM JILLIAN B."]},
   {adviser:"Jeff Aaron D. Reytomas",students:["ACUAVERA, LLOYD M.","ANASTACIO, ZERWYANE JADE A.","BETON, RAMON EXEQUIEL E.","BLANCO, WILLIAM JEFF V.","CABIDO, VRAYXON P.","DANTES, FERNANDO KARLO D.","DEJUMO, RODEL JR. D.","DELA CRUZ, RANNUEL P.","DEVERA, LOVERN G.","DOLANDOLAN, RINZEL R.","DOYANAN, ARWIN F.","ENCARNACION, BRIAN JOEL D.","GALLARDO, CHARLES ANTHONY D.","JUANICO, JOSE MIGUEL M.","NESPEROS, MHELMAR D.","ANGELES, ALLYSSA D.","ARAUCTO, MARY SALVACION D.","BALANGON, IRISH COLEEN D.","BALAURO, KRIZEL LHYNE P.","DANTE, EIRRENE CLEO F.","DAYAP, ZYNETH REXIE S.","DEDICATORIA, JESSICA","DELA CRUZ, JANNEL M.","DEVERA, AMANDA SYMONE V.","DEVERA, ANGEL N.","DEVILLAS, JASMIN R.","DIAL, ALTHEA LOREEN D.","DIMASACUPAN, KATRINA R.","DOLFO, APRIL DANE M.","DUAVE, MARY ANGEL R.","JUSTO, JESIAH MAE A.","MANLICLIC, ERICKA P.","SUNGA, KIM AIZABEL D.","TAPADO, ALEXA ARRIANE Q."]},
@@ -336,304 +440,263 @@ const DB=[
   {adviser:"Diana Rose M. Torres",students:["ALIBIADO, MICHAEL P.","BAYANI, HERALD D.","CABANLIG, JOHN EARL R.","CERVANTES, JENCINTH ALFARL R.","DORDE, ADOLF HITLER G.","DORIG, KRIS MIKAEL C.","DULLON, DANIEL DAVE B.","EPAN, RODOLFO CESAR A.","FERRER, VINCE JUSTINE D.","GALANG, ABRAHAM PAUL","GANTANG, JAMES JASTER L.","GOMEZ, WAYNE ACHILLES D.","LAPINIG, EDRIAN L.","MALLARI, JERAMHEEL C.","YABUT, AIZEN DAVE P.","YANIG, ANGELO D.","ABUJEN, FEBIE ANGELIE B.","AGBUYA, ANGEL ANN P.","ASLAM, BISMA A.","AYTONA, SHEILA MAE","BALINTAY, KRISTEL C.","CABANGON, KHATE COLLYNE","CALUGAY, GAIL HAYDEN M.","CORTEZANO, JAY-ZEE D.","DACLISON, MARY CATHERINE T.","DAPITIN, KYLIE MARIE T.","DEVILLENA, MELISSA ANN B.","DIAGO, JENNY B.","DIAL, JEN ANDREA D.","FLORES, ALLYANA MARIE B.","FONTANILLA, JHAZMINE F.","GABO, ANGEL ANNE","GOLEZ, JHASSEZ D.","IDOS, CHRISTINE JOY A.","ISIDRO, SHANE D.","LESACA, ZYAMILLAH XYKE E.","PINEDA, AZALIA C.","RIAZA, CHRISTINE MAE S.","SERIAL, DARLENE JOY L.","TONGOL, DANNA ROSE C."]},
   {adviser:"Jayson R. Cayaga",students:["ARANDIA, JOHN NICO D.","BALUYOT, JANSEN ERA M.","BAUSA, SEANN WILLIAM D.","CORTEZ, KIRBY ANGELO C.","DEGOLLADO, SEBASTIAN ETHAN R.","DEL ROSARIO, IEL IVAN D.","DIMAQUIBO, RUBEN JR. M.","DOLANDOLAN, LEXTER R.","ESCOBAL, REYSTER KLEIN D.","ESTACION, JOHN VINCENT D.","FAMANILA, JOHN PAZ D.","GONZALES, HUE D.","MORANTE, JOHN CHARLE MAGNE D.","NALICAT, AINSLEE XYRONE S.","RAFAEL, MARK ANGELO R.","SALAZAR, JAMES D.","ABUJEN, LESLIE G.","ARCALA, JULLIE DIVINE E.","BADAR, ALEXA MAE D.","BALANGON, TATZ MILDRED N.","CORTEZ, BERLYN RUTH D.","DAOS, ANGELA FAITH P.","DEGOLLADO, ANDREA SAMANTHA A.","DIMAANO, AERIELLE FAYE M.","DOLLUERAS, MELONA JOY L.","ELBO, DENNISE A.","EVANGELISTA, DANICA F.","FAMULARCANO, ANDREA E.","FERNANDEZ, ANN LYN DIANE","GALIN, KC G.","GOBALANI, RIZA NICOLE G.","INIGO, LINDSAY G.","PACHECO, VERONICA","PANLAQUE, JENELYN P.","PLOMANTES, ALLYN M.","REMULLA, TRISHA MAE R.","TANDOC, RACHEL LARIT T."]}
 ];
-const ALL_S=DB.flatMap(d=>d.students).sort();
-const ALL_A=DB.map(d=>d.adviser).sort();
+const ALL_STU = DB.flatMap(d=>d.students).sort();
+const ALL_ADV = DB.map(d=>d.adviser).sort();
 
-let userData={};
-let username='';
-let socket=null;
-let typTimer=null;
-let curMsgs=[];
-let iRevealed=false;
-let partnerRevealed=false;
-let partnerUsername='';
+// =========== STATE ===========
+let socket;
+let myProfile = { nickname:'', gender:'', aboutMe:'', username:'', avatar:'🙂', studentName:'' };
+let currentTab = 'Search';
+let anonPartnerId = null; // for reveal flow
+let revealFromId = null;
+let currentNamedPartner = null;
+let anonTypingTimer = null;
+let namedTypingTimer = null;
+const batchmates = {}; // partnerId -> { nickname, gender }
 
-setTimeout(()=>goTo('splash','verify'),1800);
-
-function goTo(from,to){
-  const f=document.getElementById(from),t=document.getElementById(to);
-  f.classList.add('out');t.classList.remove('hidden');
-  setTimeout(()=>f.classList.add('hidden'),380);
-}
-function switchTab(tab){
-  document.querySelectorAll('.tpane').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nbtn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+tab).classList.add('active');
-  const n=document.getElementById('nav-'+tab);
-  if(n)n.classList.add('active');
+// =========== SCREEN NAV ===========
+function showScreen(from, to) {
+  const f = document.getElementById(from);
+  const t = document.getElementById(to);
+  f.classList.add('gone');
+  t.classList.remove('hidden');
+  t.classList.remove('gone');
+  setTimeout(()=>f.classList.add('hidden'), 400);
+  if (to === 'app') refreshSettingsUI();
 }
 
-// AUTOCOMPLETE
-function filterStudents(v){
-  const l=document.getElementById('acStudents');
-  if(!v||v.length<2){l.classList.remove('show');return;}
-  const q=v.toUpperCase().trim();
-  const m=ALL_S.filter(s=>s.includes(q)).slice(0,8);
-  if(!m.length){l.classList.remove('show');return;}
-  l.innerHTML=m.map(s=>`<div class="acitem" onmousedown="pickStudent('${s.replace(/'/g,"\\'")}')">${s}</div>`).join('');
-  l.classList.add('show');
-}
-function pickStudent(name){
-  document.getElementById('studentName').value=name;
-  document.getElementById('acStudents').classList.remove('show');
-  const sec=DB.find(d=>d.students.includes(name));
-  if(sec)document.getElementById('adviserName').value=sec.adviser;
-}
-function filterAdvisers(v){
-  const l=document.getElementById('acAdvisers');
-  if(!v||v.length<2){l.classList.remove('show');return;}
-  const m=ALL_A.filter(a=>a.toLowerCase().includes(v.toLowerCase()));
-  if(!m.length){l.classList.remove('show');return;}
-  l.innerHTML=m.map(a=>`<div class="acitem" onmousedown="pickAdviser('${a.replace(/'/g,"\\'")}')">${a}</div>`).join('');
-  l.classList.add('show');
-}
-function pickAdviser(name){
-  document.getElementById('adviserName').value=name;
-  document.getElementById('acAdvisers').classList.remove('show');
-}
-function hideAC(id){setTimeout(()=>document.getElementById(id).classList.remove('show'),200);}
+// =========== SPLASH ===========
+setTimeout(()=>{
+  const s = document.getElementById('splash');
+  s.classList.add('gone');
+  setTimeout(()=>{ s.classList.add('hidden'); document.getElementById('intro').classList.remove('hidden'); initSocket(); }, 400);
+}, 1800);
 
-// VERIFY
+function initSocket() {
+  socket = io();
+  socket.on('auth_ok', ()=>{ showScreen('verify','profileSetup'); });
+  socket.on('auth_error', ()=>{ document.getElementById('verifyErr').textContent='❌ Invalid details. Check name and adviser.'; document.getElementById('verifyErr').classList.add('show'); });
+  socket.on('profile_updated', ()=>{});
+  socket.on('anon_searching', ()=>{ setAnonState('searching'); });
+  socket.on('anon_matched', ({ partnerGender })=>{
+    setAnonState('chat');
+    document.getElementById('anonMessages').innerHTML = '<div class="sys-msg">Connected! Say hi 👋</div>';
+    const gLabel = partnerGender==='male'?'👦 Male':partnerGender==='female'?'👧 Female':'🤍 Unknown';
+    document.getElementById('partnerGenderBadge').textContent = gLabel;
+  });
+  socket.on('anon_receive', ({ text, time })=>{ addBubble('anonMessages','in',text,time); document.getElementById('anonTyping').classList.remove('show'); });
+  socket.on('anon_partner_typing', ()=>{ document.getElementById('anonTyping').classList.add('show'); scrollTo('anonMessages'); });
+  socket.on('anon_partner_stop_typing', ()=>{ document.getElementById('anonTyping').classList.remove('show'); });
+  socket.on('anon_partner_left', ()=>{ addSys('anonMessages','Your partner has left.'); document.getElementById('anonTyping').classList.remove('show'); });
+  socket.on('reveal_sent', ()=>{ addSys('anonMessages','Reveal request sent! Waiting for response...'); });
+  socket.on('anon_reveal_request', ({ fromId, nickname, gender })=>{
+    revealFromId = fromId;
+    const gLabel = gender==='male'?'👦 Male':gender==='female'?'👧 Female':'Someone';
+    document.getElementById('incomingRevealTitle').textContent = `${nickname} wants to connect!`;
+    document.getElementById('incomingRevealText').textContent = `${gLabel} wants to reveal their name and add you to Batchmates.`;
+    document.getElementById('incomingRevealModal').classList.add('show');
+  });
+  socket.on('reveal_complete', ({ partnerId, partnerNickname, partnerGender })=>{
+    batchmates[partnerId] = { nickname: partnerNickname, gender: partnerGender };
+    currentNamedPartner = partnerId;
+    addSys('anonMessages',`🎉 You're now connected as Batchmates!`);
+    refreshBatchmates();
+  });
+  socket.on('convos_list', (list)=>{ renderBatchmates(list); });
+  socket.on('named_receive', ({ fromId, text, time })=>{
+    if (currentNamedPartner === fromId) { addBubble('namedMessages','in',text,time); document.getElementById('namedTyping').classList.remove('show'); }
+    refreshBatchmates();
+  });
+  socket.on('named_sent', ({ text, time })=>{ addBubble('namedMessages','out',text,time); });
+  socket.on('named_partner_typing', ()=>{ document.getElementById('namedTyping').classList.add('show'); scrollTo('namedMessages'); });
+  socket.on('named_partner_stop_typing', ()=>{ document.getElementById('namedTyping').classList.remove('show'); });
+  socket.on('convo_history', ({ messages, partnerId })=>{
+    const msgs = document.getElementById('namedMessages');
+    msgs.innerHTML = '<div class="sys-msg">Start of your conversation 💬</div>';
+    messages.forEach(m => addBubble('namedMessages', m.from===socket.id?'out':'in', m.text, m.time));
+  });
+}
+
+// =========== VERIFY ===========
+function filterStu(v){
+  const list=document.getElementById('stuList');
+  if(!v||v.length<2){list.classList.remove('show');return;}
+  const q=v.toUpperCase();
+  const m=ALL_STU.filter(s=>s.includes(q)).slice(0,8);
+  if(!m.length){list.classList.remove('show');return;}
+  list.innerHTML=m.map(s=>`<div class="auto-item" onmousedown="pickStu('${s.replace(/'/g,"\\'")}')"> ${s}</div>`).join('');
+  list.classList.add('show');
+}
+function pickStu(n){ document.getElementById('snInput').value=n; document.getElementById('stuList').classList.remove('show'); const s=DB.find(d=>d.students.includes(n)); if(s){document.getElementById('advInput').value=s.adviser;} }
+function filterAdv(v){
+  const list=document.getElementById('advList');
+  if(!v||v.length<2){list.classList.remove('show');return;}
+  const q=v.toLowerCase();
+  const m=ALL_ADV.filter(a=>a.toLowerCase().includes(q));
+  if(!m.length){list.classList.remove('show');return;}
+  list.innerHTML=m.map(a=>`<div class="auto-item" onmousedown="pickAdv('${a.replace(/'/g,"\\'")}')"> ${a}</div>`).join('');
+  list.classList.add('show');
+}
+function pickAdv(n){ document.getElementById('advInput').value=n; document.getElementById('advList').classList.remove('show'); }
+function hideAL(id){ setTimeout(()=>document.getElementById(id).classList.remove('show'),200); }
 function doVerify(){
-  const name=document.getElementById('studentName').value.trim().toUpperCase();
-  const adviser=document.getElementById('adviserName').value.trim();
-  const err=document.getElementById('errMsg');
+  const name=document.getElementById('snInput').value.trim().toUpperCase();
+  const adv=document.getElementById('advInput').value.trim();
+  const err=document.getElementById('verifyErr');
   err.classList.remove('show');
-  ['studentName','adviserName'].forEach(id=>document.getElementById(id).classList.remove('err'));
-  if(!name||!adviser){err.textContent='⚠️ Fill in all fields.';err.classList.add('show');return;}
+  if(!name||!adv){err.textContent='⚠️ Fill in all fields.';err.classList.add('show');return;}
   const sec=DB.find(d=>d.students.some(s=>s.toUpperCase()===name));
-  if(!sec){err.textContent='❌ Name not found in 2023-2024 batch.';err.classList.add('show');document.getElementById('studentName').classList.add('err');return;}
-  if(sec.adviser.toLowerCase()!==adviser.toLowerCase()){err.textContent='❌ Adviser does not match.';err.classList.add('show');document.getElementById('adviserName').classList.add('err');return;}
-  userData={schoolYear:'2023-2024',studentName:name,adviserName:adviser};
-  goTo('verify','gender');
+  if(!sec){err.textContent='❌ Name not found in the 2023-2024 batch.';err.classList.add('show');return;}
+  if(sec.adviser.toLowerCase()!==adv.toLowerCase()){err.textContent='❌ Adviser does not match your section.';err.classList.add('show');return;}
+  myProfile.studentName = name;
+  socket.emit('verify_user',{schoolYear:'2023-2024',studentName:name,adviserName:adv});
 }
 
-// GENDER
-function setGender(g){
-  userData.gender=g;
-  goTo('gender','app');
-  updateProfile();
-  initSocket();
-  loadConvos();
+// =========== PROFILE SETUP ===========
+const EMOJIS=['🙂','😊','😎','🤗','😄','🥳','🤩','😜','🧑','👦','👧','🧒','🤓','😇','🥸'];
+let emojiIdx=0;
+function pickEmoji(){ emojiIdx=(emojiIdx+1)%EMOJIS.length; document.getElementById('setupAvatar').textContent=EMOJIS[emojiIdx]; myProfile.avatar=EMOJIS[emojiIdx]; }
+function pickGender(g){
+  myProfile.gender=g;
+  ['gMale','gFemale','gOther'].forEach(id=>document.getElementById(id).classList.remove('sel'));
+  document.getElementById(g==='male'?'gMale':g==='female'?'gFemale':'gOther').classList.add('sel');
+}
+function saveProfile(){
+  const nick=document.getElementById('nickInput').value.trim();
+  if(!nick){alert('Please enter a nickname!');return;}
+  if(!myProfile.gender){alert('Please select your gender!');return;}
+  myProfile.nickname=nick;
+  socket.emit('update_profile',{ nickname:myProfile.nickname, gender:myProfile.gender, avatar:myProfile.avatar });
+  showScreen('profileSetup','app');
+  switchTab('Search');
 }
 
-function updateProfile(){
-  const em=userData.gender==='man'?'👦':'👧';
-  document.getElementById('pavatar').textContent=em;
-  document.getElementById('pname').textContent=userData.studentName.split(',')[0];
-  document.getElementById('iname').textContent=userData.studentName;
-  document.getElementById('iadviser').textContent=userData.adviserName;
-  document.getElementById('igender').textContent=userData.gender==='man'?'Male':'Female';
-}
-
-function saveUsername(){
-  const v=document.getElementById('uinput').value.trim();
-  if(!v)return;
-  username=v;
-  const t=document.getElementById('toast');
-  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);
-}
-
-// SOCKET
-function initSocket(){
-  socket=io();
-  socket.on('searching',()=>{});
-  socket.on('matched',()=>{
-    curMsgs=[];iRevealed=false;partnerRevealed=false;partnerUsername='';
-    openChat();
+// =========== TABS ===========
+function switchTab(tab){
+  currentTab=tab;
+  ['Search','Batchmates','Settings'].forEach(t=>{
+    document.getElementById('tab'+t).style.display = t===tab?'flex':'none';
+    document.getElementById('nav'+t).classList.toggle('active',t===tab);
   });
-  socket.on('receive_message',({text})=>addBubble('in',text));
-  socket.on('partner_revealed',({username:pu})=>{
-    partnerRevealed=true;
-    partnerUsername=pu;
-    addSysMsg('Your batch mate revealed their identity: @'+pu);
-    document.getElementById('chatPartner').textContent='@'+pu;
-    if(iRevealed)doSaveConvo(pu);
-  });
-  socket.on('partner_typing',()=>{document.getElementById('typi').classList.add('show');scrollChat();});
-  socket.on('partner_stop_typing',()=>{document.getElementById('typi').classList.remove('show');});
-  socket.on('partner_left',()=>{
-    document.getElementById('typi').classList.remove('show');
-    addSysMsg('Your batch mate left the chat.');
-    document.getElementById('chatStat').textContent='• Disconnected';
-    document.getElementById('chatStat').style.color='var(--red)';
-    document.getElementById('rvbtn').disabled=true;
-  });
-  socket.on('auth_error',()=>{alert('❌ Invalid credentials. Please refresh.');});
+  if(tab==='Batchmates') refreshBatchmates();
+  if(tab==='Settings') refreshSettingsUI();
 }
 
-// SEARCH
-function startSearch(){
-  if(!socket||!socket.connected){alert('Connection error. Refresh the page!');return;}
-  switchTab('searching');
-  socket.emit('find_match',userData);
+// =========== ANON CHAT ===========
+function setAnonState(state){
+  document.getElementById('searchIdle').style.display=state==='idle'?'flex':'none';
+  document.getElementById('searchSearching').style.display=state==='searching'?'flex':'none';
+  document.getElementById('anonChat').style.display=state==='chat'?'flex':'none';
 }
-function cancelSearch(){
-  if(socket)socket.emit('leave_chat');
-  switchTab('search');
+function startAnon(){ socket.emit('anon_find'); }
+function cancelAnon(){ socket.emit('anon_leave'); setAnonState('idle'); }
+function leaveAnon(){ socket.emit('anon_leave'); setAnonState('idle'); }
+function sendAnon(){
+  const inp=document.getElementById('anonInput');
+  const t=inp.value.trim(); if(!t) return;
+  addBubble('anonMessages','out',t,now());
+  socket.emit('anon_message',{text:t});
+  inp.value=''; socket.emit('anon_stop_typing'); clearTimeout(anonTypingTimer);
 }
-
-// OPEN ANON CHAT (comes from searching screen)
-function openChat(){
-  curMsgs=[];
-  const app=document.getElementById('app'),chat=document.getElementById('chat');
-  app.classList.add('out');chat.classList.remove('hidden');
-  setTimeout(()=>app.classList.add('hidden'),380);
-  document.getElementById('cmsgs').innerHTML='<div class="sysmsg">Connected to a batch mate! Say hi 👋</div>';
-  document.getElementById('chatStat').textContent='• Online';
-  document.getElementById('chatStat').style.color='var(--green)';
-  document.getElementById('chatPartner').textContent='Anonymous';
-  document.getElementById('rvbtn').disabled=false;
-  document.getElementById('typi').classList.remove('show');
-  document.getElementById('cinput').value='';
+function anonTypingEvt(){
+  socket.emit('anon_typing');
+  clearTimeout(anonTypingTimer);
+  anonTypingTimer=setTimeout(()=>socket.emit('anon_stop_typing'),1500);
 }
 
-function leaveChat(){
-  if(!confirm('Leave this chat?'))return;
-  if(socket)socket.emit('leave_chat');
-  const app=document.getElementById('app'),chat=document.getElementById('chat');
-  chat.classList.add('out');app.classList.remove('hidden');app.classList.remove('out');
-  setTimeout(()=>chat.classList.add('hidden'),380);
-  switchTab('search');
-}
+// =========== REVEAL ===========
+function openRevealModal(){ document.getElementById('revealModal').classList.add('show'); }
+function closeRevealModal(){ document.getElementById('revealModal').classList.remove('show'); }
+function confirmReveal(){ closeRevealModal(); socket.emit('anon_reveal'); }
+function declineReveal(){ document.getElementById('incomingRevealModal').classList.remove('show'); revealFromId=null; }
+function acceptReveal(){ document.getElementById('incomingRevealModal').classList.remove('show'); if(revealFromId) socket.emit('anon_reveal_accept',{fromId:revealFromId}); revealFromId=null; }
 
-// SEND MESSAGE
-function sendMsg(){
-  const inp=document.getElementById('cinput');
-  const text=inp.value.trim();
-  if(!text)return;
-  addBubble('out',text);
-  if(socket)socket.emit('send_message',{text});
-  inp.value='';
-  clearTimeout(typTimer);
-  if(socket)socket.emit('stop_typing');
-}
-function onType(){
-  if(socket)socket.emit('typing');
-  clearTimeout(typTimer);
-  typTimer=setTimeout(()=>{if(socket)socket.emit('stop_typing');},1500);
-}
-function addBubble(dir,text){
-  const msgs=document.getElementById('cmsgs');
-  const typi=document.getElementById('typi');
-  const wrap=document.createElement('div');
-  wrap.className='bwrap '+dir;
-  wrap.innerHTML=`<div class="bubble">${text}</div>`;
-  msgs.insertBefore(wrap,typi);
-  curMsgs.push({dir,text});
-  scrollChat();
-  // Show reveal button only after 5+ messages
-  if(curMsgs.length>=5 && !iRevealed){
-    document.getElementById('rvbtn').style.display='';
-  }
-}
-function addSysMsg(text){
-  const msgs=document.getElementById('cmsgs');
-  const el=document.createElement('div');
-  el.className='sysmsg';el.textContent=text;
-  msgs.appendChild(el);scrollChat();
-}
-function scrollChat(){const m=document.getElementById('cmsgs');m.scrollTop=m.scrollHeight;}
-
-// REVEAL
-function showReveal(){
-  if(!username){
-    alert('Set your username muna sa Profile tab!');
-    const app=document.getElementById('app'),chat=document.getElementById('chat');
-    chat.classList.add('out');app.classList.remove('hidden');app.classList.remove('out');
-    setTimeout(()=>{chat.classList.add('hidden');switchTab('profile');},380);
-    return;
-  }
-  document.getElementById('mushow').textContent='@'+username;
-  document.getElementById('rvModal').classList.add('show');
-}
-function hideReveal(){document.getElementById('rvModal').classList.remove('show');}
-function confirmReveal(){
-  hideReveal();
-  iRevealed=true;
-  document.getElementById('rvbtn').disabled=true;
-  if(socket)socket.emit('reveal_username',{username});
-  addSysMsg('You revealed your identity: @'+username);
-  if(partnerRevealed)doSaveConvo(partnerUsername);
-}
-
-// SAVE CONVO TO SERVER (persistent)
-async function doSaveConvo(pUsername){
-  addSysMsg('Both revealed! Saving convo... ✅');
-  try{
-    await fetch('/api/convos/'+encodeURIComponent(userData.studentName),{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({partnerName:'@'+pUsername,msgs:[...curMsgs]})
-    });
-    await loadConvos();
-  }catch(e){console.log('save err',e);}
-  // Auto-navigate to messages tab after 1.5 seconds
-  setTimeout(()=>{
-    const chat=document.getElementById('chat');
-    const app=document.getElementById('app');
-    chat.classList.add('out');
-    app.classList.remove('hidden');app.classList.remove('out');
-    setTimeout(()=>chat.classList.add('hidden'),380);
-    switchTab('messages');
-  },1500);
-}
-
-// LOAD CONVOS FROM SERVER
-async function loadConvos(){
-  try{
-    const res=await fetch('/api/convos/'+encodeURIComponent(userData.studentName));
-    const data=await res.json();
-    renderConvos(data);
-  }catch(e){renderConvos([]);}
-}
-
-function renderConvos(list){
-  const el=document.getElementById('msgList');
-  if(!list||!list.length){
-    el.innerHTML='<div class="mempty"><div class="emicon">💬</div><div>No conversations yet.<br>Chat and reveal identity to save here!</div></div>';
-    return;
-  }
-  window._convos=list;
-  el.innerHTML=list.map((c,i)=>`
-    <div class="citem" onclick="openSavedChat(${i})">
-      <div class="cavatar">👤</div>
-      <div class="cinfo">
-        <div class="cname">${c.partnerName}</div>
-        <div class="cprev">${c.msgs&&c.msgs.length?c.msgs[c.msgs.length-1].text:'Saved chat'}</div>
+// =========== BATCHMATES ===========
+function refreshBatchmates(){ socket.emit('get_convos'); }
+function renderBatchmates(list){
+  const container=document.getElementById('bmList');
+  const empty=document.getElementById('bmEmpty');
+  if(!list||list.length===0){empty.style.display='flex';return;}
+  empty.style.display='none';
+  container.innerHTML='';
+  list.forEach(item=>{
+    const gEmoji=item.partnerGender==='male'?'👦':item.partnerGender==='female'?'👧':'🤍';
+    const el=document.createElement('div');
+    el.className='bm-item';
+    el.innerHTML=`
+      <div class="bm-avatar">${gEmoji}</div>
+      <div class="bm-info">
+        <div class="bm-name">${item.partnerNickname}</div>
+        <div class="bm-last">${item.lastMsg}</div>
       </div>
-      <div class="cdate">${c.date||''}</div>
-    </div>
-  `).join('');
+      <div class="bm-chat-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>`;
+    el.onclick=()=>openNamedChat(item.partnerId, item.partnerNickname);
+    container.appendChild(el);
+  });
+}
+function openNamedChat(partnerId, name){
+  currentNamedPartner=partnerId;
+  document.getElementById('namedChatName').textContent=name;
+  document.getElementById('namedMessages').innerHTML='<div class="sys-msg">Start of your conversation 💬</div>';
+  socket.emit('get_convo_history',{partnerId});
+  showScreen('app','namedChat');
+}
+function sendNamed(){
+  if(!currentNamedPartner) return;
+  const inp=document.getElementById('namedInput');
+  const t=inp.value.trim(); if(!t) return;
+  socket.emit('named_message',{partnerId:currentNamedPartner, text:t});
+  inp.value=''; socket.emit('named_stop_typing',{partnerId:currentNamedPartner}); clearTimeout(namedTypingTimer);
+}
+function namedTypingEvt(){
+  if(!currentNamedPartner) return;
+  socket.emit('named_typing',{partnerId:currentNamedPartner});
+  clearTimeout(namedTypingTimer);
+  namedTypingTimer=setTimeout(()=>socket.emit('named_stop_typing',{partnerId:currentNamedPartner}),1500);
 }
 
-function openSavedChat(idx){
-  const c=window._convos&&window._convos[idx];
-  if(!c)return;
-  document.getElementById('scPartner').textContent=c.partnerName;
-  const scm=document.getElementById('scMsgs');
-  scm.innerHTML='';
-  if(c.msgs&&c.msgs.length){
-    c.msgs.forEach(m=>{
-      const wrap=document.createElement('div');
-      wrap.className='bwrap '+m.dir;
-      wrap.innerHTML=`<div class="bubble">${m.text}</div>`;
-      scm.appendChild(wrap);
-    });
-  } else {
-    scm.innerHTML='<div class="sysmsg">No messages saved.</div>';
-  }
-  const app=document.getElementById('app'),sc=document.getElementById('saved-chat');
-  app.classList.add('out');sc.classList.remove('hidden');
-  setTimeout(()=>app.classList.add('hidden'),380);
-  scm.scrollTop=scm.scrollHeight;
+// =========== SETTINGS ===========
+function refreshSettingsUI(){
+  document.getElementById('settingsAvatar').textContent=myProfile.avatar||'🙂';
+  document.getElementById('settingsName').textContent=myProfile.nickname||'—';
+  document.getElementById('settingsGender').textContent=myProfile.gender||'—';
+  document.getElementById('settingsAbout').textContent=myProfile.aboutMe||'Add a few words about yourself to interest your partner';
+}
+function openEditProfile(){
+  document.getElementById('nickInput').value=myProfile.nickname;
+  showScreen('app','profileSetup');
+}
+function openAboutMe(){
+  const txt=prompt('About Me:',myProfile.aboutMe);
+  if(txt!==null){ myProfile.aboutMe=txt; socket.emit('update_profile',{aboutMe:txt}); refreshSettingsUI(); }
+}
+function openAcctSettings(){
+  document.getElementById('usernameInput').value=myProfile.username;
+  showScreen('app','accountSettings');
+}
+function saveUsername(){
+  myProfile.username=document.getElementById('usernameInput').value;
+  socket.emit('update_profile',{username:myProfile.username});
+  showScreen('accountSettings','app');
 }
 
-function closeSavedChat(){
-  const app=document.getElementById('app'),sc=document.getElementById('saved-chat');
-  sc.classList.add('out');app.classList.remove('hidden');app.classList.remove('out');
-  setTimeout(()=>sc.classList.add('hidden'),380);
+// =========== UTILS ===========
+function addBubble(containerId, dir, text, time){
+  const c=document.getElementById(containerId);
+  const w=document.createElement('div'); w.className=`bwrap ${dir}`;
+  w.innerHTML=`<div class="bubble">${escHtml(text)}</div><div class="btime">${time||''}</div>`;
+  const typing=containerId==='anonMessages'?document.getElementById('anonTyping'):document.getElementById('namedTyping');
+  if(typing&&typing.parentElement===c) c.insertBefore(w,typing); else c.appendChild(w);
+  scrollTo(containerId);
 }
+function addSys(containerId, text){
+  const c=document.getElementById(containerId);
+  const el=document.createElement('div'); el.className='sys-msg'; el.textContent=text;
+  c.appendChild(el); scrollTo(containerId);
+}
+function scrollTo(id){ const el=document.getElementById(id); el.scrollTop=el.scrollHeight; }
+function now(){ return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
+function escHtml(t){ const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
 </script>
 </body>
 </html>
