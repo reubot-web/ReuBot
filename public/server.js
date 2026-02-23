@@ -9,6 +9,75 @@ const io = new Server(server, { cors: { origin: "*" } });
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
+
+const app = express();
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+  }
+});
+
+app.use(express.static("public"));
+
+let waitingUser = null;
+
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
+
+  socket.on("findMatch", () => {
+    if (waitingUser) {
+      const room = socket.id + "#" + waitingUser.id;
+
+      socket.join(room);
+      waitingUser.join(room);
+
+      socket.room = room;
+      waitingUser.room = room;
+
+      io.to(room).emit("matched");
+
+      waitingUser = null;
+    } else {
+      waitingUser = socket;
+    }
+  });
+
+  socket.on("sendMessage", (msg) => {
+    if (socket.room) {
+      io.to(socket.room).emit("receiveMessage", msg);
+    }
+  });
+
+  socket.on("revealRequest", () => {
+    if (socket.room) {
+      socket.to(socket.room).emit("partnerWantsReveal");
+    }
+  });
+
+  socket.on("acceptReveal", () => {
+    if (socket.room) {
+      io.to(socket.room).emit("revealIdentity", socket.id);
+    }
+  });
+
+  socket.on("leaveChat", () => {
+    if (socket.room) {
+      io.to(socket.room).emit("partnerLeft");
+      socket.leave(socket.room);
+      socket.room = null;
+    }
+  });
+
+  socket.on("disconnect", () => {
+    if (waitingUser === socket) waitingUser = null;
+  });
+});
+
 // ── DATABASE ──
 const DATABASE = [
   { adviser: "Karleen R. Dumangas", students: ["AQUINO, RAZZEL V.","CAYABAN, CEDEE T.","DOLLETE, DANIEL LOUIS F.","DOMACENA, MICO ANGELO M.","ENRIQUEZ, THOMIE HENBERTSON C.","ESPAÑOL, JUNES IAN D.","LINGUAJE, REYNALDO JR. C.","QUILAB, JHAYE ANDRIE D.","RETIRADO, TJ CHARLS D.","TUGADE, ALFRED A.","VERMUG, EL CIV D.","VILLAREY, MATT EDREI D.","ANOCHE, ARIA MIEL D.","ANOCHE, DANA FAITH L.","AQUINO, MADILYN D.","ARIMAS, FAYE R.","BALUYOT, JHEMAICA C.","BASA, FRAN LUIZA E.","BAUTISTA, LEIGH ANN D.","BAYANI, JEYAN D.","BERGONIA, VENISSE NICOLE D.","DAYO, DAPHINE MAE D.","DELIQUIÑA, EUNICE S.","DITAPAT, AUBREY D.","ENCINARES, TIFFANY ZEA S.","FAMANILA, PHOEMELA ROSE A.","FEDERE, KRYSTLE ANNE D.","FERRER, JULIENNE NICOLE D.","FULGENCIO, KATHLEEN V.","GUIANG, KRYZ PAULA N.","LUNA, DONITA FE A.","MACAALAY, LOVELY MAY B.","OMAY, FLORENCE B.","QUINTO, JAZMINE JOY L.","RAMOS, DIANNE S.","RAYALA, EUREKA MAE V.","TAN, CLARISSE M.","VILLANUEVA, CHARM JILLIAN B."] },
