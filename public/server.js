@@ -6,10 +6,8 @@ const path = require("path");
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
-app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// ── DATABASE ──
 const DATABASE = [
   { adviser: "Karleen R. Dumangas", students: ["AQUINO, RAZZEL V.","CAYABAN, CEDEE T.","DOLLETE, DANIEL LOUIS F.","DOMACENA, MICO ANGELO M.","ENRIQUEZ, THOMIE HENBERTSON C.","ESPAÑOL, JUNES IAN D.","LINGUAJE, REYNALDO JR. C.","QUILAB, JHAYE ANDRIE D.","RETIRADO, TJ CHARLS D.","TUGADE, ALFRED A.","VERMUG, EL CIV D.","VILLAREY, MATT EDREI D.","ANOCHE, ARIA MIEL D.","ANOCHE, DANA FAITH L.","AQUINO, MADILYN D.","ARIMAS, FAYE R.","BALUYOT, JHEMAICA C.","BASA, FRAN LUIZA E.","BAUTISTA, LEIGH ANN D.","BAYANI, JEYAN D.","BERGONIA, VENISSE NICOLE D.","DAYO, DAPHINE MAE D.","DELIQUIÑA, EUNICE S.","DITAPAT, AUBREY D.","ENCINARES, TIFFANY ZEA S.","FAMANILA, PHOEMELA ROSE A.","FEDERE, KRYSTLE ANNE D.","FERRER, JULIENNE NICOLE D.","FULGENCIO, KATHLEEN V.","GUIANG, KRYZ PAULA N.","LUNA, DONITA FE A.","MACAALAY, LOVELY MAY B.","OMAY, FLORENCE B.","QUINTO, JAZMINE JOY L.","RAMOS, DIANNE S.","RAYALA, EUREKA MAE V.","TAN, CLARISSE M.","VILLANUEVA, CHARM JILLIAN B."] },
   { adviser: "Jeff Aaron D. Reytomas", students: ["ACUAVERA, LLOYD M.","ANASTACIO, ZERWYANE JADE A.","BETON, RAMON EXEQUIEL E.","BLANCO, WILLIAM JEFF V.","CABIDO, VRAYXON P.","DANTES, FERNANDO KARLO D.","DEJUMO, RODEL JR. D.","DELA CRUZ, RANNUEL P.","DEVERA, LOVERN G.","DOLANDOLAN, RINZEL R.","DOYANAN, ARWIN F.","ENCARNACION, BRIAN JOEL D.","GALLARDO, CHARLES ANTHONY D.","JUANICO, JOSE MIGUEL M.","NESPEROS, MHELMAR D.","ANGELES, ALLYSSA D.","ARAUCTO, MARY SALVACION D.","BALANGON, IRISH COLEEN D.","BALAURO, KRIZEL LHYNE P.","DANTE, EIRRENE CLEO F.","DAYAP, ZYNETH REXIE S.","DEDICATORIA, JESSICA","DELA CRUZ, JANNEL M.","DEVERA, AMANDA SYMONE V.","DEVERA, ANGEL N.","DEVILLAS, JASMIN R.","DIAL, ALTHEA LOREEN D.","DIMASACUPAN, KATRINA R.","DOLFO, APRIL DANE M.","DUAVE, MARY ANGEL R.","JUSTO, JESIAH MAE A.","MANLICLIC, ERICKA P.","SUNGA, KIM AIZABEL D.","TAPADO, ALEXA ARRIANE Q."] },
@@ -20,131 +18,168 @@ const DATABASE = [
   { adviser: "Jayson R. Cayaga", students: ["ARANDIA, JOHN NICO D.","BALUYOT, JANSEN ERA M.","BAUSA, SEANN WILLIAM D.","CORTEZ, KIRBY ANGELO C.","DEGOLLADO, SEBASTIAN ETHAN R.","DEL ROSARIO, IEL IVAN D.","DIMAQUIBO, RUBEN JR. M.","DOLANDOLAN, LEXTER R.","ESCOBAL, REYSTER KLEIN D.","ESTACION, JOHN VINCENT D.","FAMANILA, JOHN PAZ D.","GONZALES, HUE D.","MORANTE, JOHN CHARLE MAGNE D.","NALICAT, AINSLEE XYRONE S.","RAFAEL, MARK ANGELO R.","SALAZAR, JAMES D.","ABUJEN, LESLIE G.","ARCALA, JULLIE DIVINE E.","BADAR, ALEXA MAE D.","BALANGON, TATZ MILDRED N.","CORTEZ, BERLYN RUTH D.","DAOS, ANGELA FAITH P.","DEGOLLADO, ANDREA SAMANTHA A.","DIMAANO, AERIELLE FAYE M.","DOLLUERAS, MELONA JOY L.","ELBO, DENNISE A.","EVANGELISTA, DANICA F.","FAMULARCANO, ANDREA E.","FERNANDEZ, ANN LYN DIANE","GALIN, KC G.","GOBALANI, RIZA NICOLE G.","INIGO, LINDSAY G.","PACHECO, VERONICA","PANLAQUE, JENELYN P.","PLOMANTES, ALLYN M.","REMULLA, TRISHA MAE R.","TANDOC, RACHEL LARIT T."] }
 ];
 
-function validate(schoolYear, name, adviser) {
-  if (schoolYear !== "2023-2024") return false;
-  const n = name.toUpperCase().trim();
-  const sec = DATABASE.find(d => d.students.some(s => s.toUpperCase() === n));
-  if (!sec) return false;
-  return sec.adviser.toLowerCase() === adviser.trim().toLowerCase();
+function validateUser(schoolYear, studentName, adviserName) {
+  if (schoolYear !== "2023-2024") return null;
+  const name = studentName.toUpperCase().trim();
+  const section = DATABASE.find(d => d.students.some(s => s.toUpperCase() === name));
+  if (!section) return null;
+  if (section.adviser.toLowerCase() !== adviserName.trim().toLowerCase()) return null;
+  return true;
 }
 
-// ── PERSISTENT STORAGE (in-memory, survives reconnects within session) ──
-// conversations[studentName] = [ { partnerName, msgs: [{dir,text}], date } ]
-const conversations = new Map();
+// State
+const users = new Map(); // socketId -> userObj
+let anonQueue = [];
+const anonRooms = new Map();   // roomId -> [sid1, sid2]
+const socketToAnonRoom = new Map();
+const namedConvos = new Map(); // "sid1__sid2" -> { messages: [] }
 
-function getConvos(studentName) {
-  const key = studentName.toUpperCase().trim();
-  if (!conversations.has(key)) conversations.set(key, []);
-  return conversations.get(key);
-}
-
-function saveConvo(studentName, partnerName, msgs) {
-  const key = studentName.toUpperCase().trim();
-  const list = getConvos(key);
-  const existing = list.find(c => c.partnerName === partnerName);
-  if (existing) {
-    existing.msgs = msgs;
-    existing.date = new Date().toLocaleDateString();
-  } else {
-    list.push({ partnerName, msgs, date: new Date().toLocaleDateString() });
-  }
-}
-
-// REST endpoints for conversations
-app.get('/api/convos/:studentName', (req, res) => {
-  const name = decodeURIComponent(req.params.studentName).toUpperCase().trim();
-  res.json(getConvos(name));
-});
-
-app.post('/api/convos/:studentName', (req, res) => {
-  const name = decodeURIComponent(req.params.studentName).toUpperCase().trim();
-  const { partnerName, msgs } = req.body;
-  saveConvo(name, partnerName, msgs);
-  res.json({ ok: true });
-});
-
-// ── SOCKET STATE ──
-let waitingQueue = [];
-const rooms = new Map();       // roomId -> [sid1, sid2]
-const socketToRoom = new Map();
-const socketToUser = new Map(); // sid -> { studentName, username }
+function getKey(a, b) { return [a,b].sort().join('__'); }
 
 io.on("connection", (socket) => {
 
-  // Find match
-  socket.on("find_match", ({ schoolYear, studentName, adviserName, gender }) => {
-    if (!validate(schoolYear, studentName, adviserName)) {
-      socket.emit("auth_error"); return;
-    }
-    socketToUser.set(socket.id, { studentName: studentName.toUpperCase().trim(), username: "" });
-    leaveRoom(socket);
+  socket.on("verify_user", ({ schoolYear, studentName, adviserName }) => {
+    if (!validateUser(schoolYear, studentName, adviserName)) { socket.emit("auth_error"); return; }
+    users.set(socket.id, { studentName: studentName.toUpperCase().trim(), nickname: "", gender: "", aboutMe: "", username: "", verified: true });
+    socket.emit("auth_ok");
+  });
 
-    if (waitingQueue.length > 0) {
-      const partnerId = waitingQueue.shift();
-      const partnerSocket = io.sockets.sockets.get(partnerId);
-      if (!partnerSocket) { waitingQueue.push(socket.id); socket.emit("searching"); return; }
+  socket.on("update_profile", (data) => {
+    const u = users.get(socket.id);
+    if (!u) return;
+    Object.assign(u, data);
+    socket.emit("profile_updated", u);
+  });
 
-      const roomId = `room_${Date.now()}`;
-      rooms.set(roomId, [socket.id, partnerId]);
-      socketToRoom.set(socket.id, roomId);
-      socketToRoom.set(partnerId, roomId);
-      socket.join(roomId);
-      partnerSocket.join(roomId);
-
-      socket.emit("matched", { partnerId });
-      partnerSocket.emit("matched", { partnerId: socket.id });
+  // ANONYMOUS CHAT
+  socket.on("anon_find", () => {
+    const user = users.get(socket.id);
+    if (!user?.verified) { socket.emit("auth_error"); return; }
+    leaveAnon(socket);
+    const idx = anonQueue.findIndex(id => io.sockets.sockets.get(id));
+    if (idx >= 0) {
+      const partnerId = anonQueue.splice(idx, 1)[0];
+      const partnerSock = io.sockets.sockets.get(partnerId);
+      const roomId = `anon_${Date.now()}`;
+      anonRooms.set(roomId, [socket.id, partnerId]);
+      socketToAnonRoom.set(socket.id, roomId);
+      socketToAnonRoom.set(partnerId, roomId);
+      socket.join(roomId); partnerSock.join(roomId);
+      const partnerUser = users.get(partnerId);
+      socket.emit("anon_matched", { partnerGender: partnerUser?.gender || "unknown" });
+      partnerSock.emit("anon_matched", { partnerGender: user.gender || "unknown" });
     } else {
-      waitingQueue.push(socket.id);
-      socket.emit("searching");
+      anonQueue.push(socket.id);
+      socket.emit("anon_searching");
     }
   });
 
-  // Message
-  socket.on("send_message", ({ text }) => {
-    const roomId = socketToRoom.get(socket.id);
+  socket.on("anon_message", ({ text }) => {
+    const roomId = socketToAnonRoom.get(socket.id);
     if (!roomId) return;
-    socket.to(roomId).emit("receive_message", { text });
+    const time = new Date().toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" });
+    socket.to(roomId).emit("anon_receive", { text, time });
   });
 
-  // Reveal identity
-  socket.on("reveal_username", ({ username }) => {
-    const roomId = socketToRoom.get(socket.id);
+  socket.on("anon_typing", () => { const r=socketToAnonRoom.get(socket.id); if(r) socket.to(r).emit("anon_partner_typing"); });
+  socket.on("anon_stop_typing", () => { const r=socketToAnonRoom.get(socket.id); if(r) socket.to(r).emit("anon_partner_stop_typing"); });
+
+  // Reveal name — creates a named convo entry and notifies partner
+  socket.on("anon_reveal", () => {
+    const roomId = socketToAnonRoom.get(socket.id);
     if (!roomId) return;
-    const user = socketToUser.get(socket.id);
-    if (user) user.username = username;
-    socket.to(roomId).emit("partner_revealed", { username });
+    const members = anonRooms.get(roomId);
+    if (!members) return;
+    const partnerId = members.find(id => id !== socket.id);
+    if (!partnerId) return;
+    const user = users.get(socket.id);
+    const key = getKey(socket.id, partnerId);
+    if (!namedConvos.has(key)) namedConvos.set(key, { messages: [] });
+    // Notify partner of reveal request
+    const partnerSock = io.sockets.sockets.get(partnerId);
+    if (partnerSock) {
+      partnerSock.emit("anon_reveal_request", {
+        fromId: socket.id,
+        nickname: user?.nickname || user?.studentName?.split(",")[0] || "Someone",
+        gender: user?.gender || "unknown"
+      });
+    }
+    socket.emit("reveal_sent");
   });
 
-  // Save conversation (called when both reveal or when leaving after reveal)
-  socket.on("save_convo", ({ partnerName, msgs }) => {
-    const user = socketToUser.get(socket.id);
-    if (!user) return;
-    saveConvo(user.studentName, partnerName, msgs);
+  // Partner accepts reveal
+  socket.on("anon_reveal_accept", ({ fromId }) => {
+    const myUser = users.get(socket.id);
+    const theirUser = users.get(fromId);
+    const fromSock = io.sockets.sockets.get(fromId);
+    const key = getKey(socket.id, fromId);
+    if (!namedConvos.has(key)) namedConvos.set(key, { messages: [] });
+    // Both sides get each other's info
+    socket.emit("reveal_complete", {
+      partnerId: fromId,
+      partnerNickname: theirUser?.nickname || theirUser?.studentName?.split(",")[0] || "Batch mate",
+      partnerGender: theirUser?.gender || "unknown"
+    });
+    if (fromSock) fromSock.emit("reveal_complete", {
+      partnerId: socket.id,
+      partnerNickname: myUser?.nickname || myUser?.studentName?.split(",")[0] || "Batch mate",
+      partnerGender: myUser?.gender || "unknown"
+    });
   });
 
-  // Typing
-  socket.on("typing", () => { const r = socketToRoom.get(socket.id); if (r) socket.to(r).emit("partner_typing"); });
-  socket.on("stop_typing", () => { const r = socketToRoom.get(socket.id); if (r) socket.to(r).emit("partner_stop_typing"); });
+  socket.on("anon_leave", () => leaveAnon(socket));
 
-  // Leave
-  socket.on("leave_chat", () => leaveRoom(socket));
+  // NAMED MESSAGING (Batchmates tab)
+  socket.on("get_convos", () => {
+    const list = [];
+    namedConvos.forEach((convo, key) => {
+      if (!key.includes(socket.id)) return;
+      const partnerId = key.split('__').find(id => id !== socket.id);
+      const pu = users.get(partnerId);
+      const last = convo.messages[convo.messages.length-1];
+      list.push({
+        partnerId,
+        partnerNickname: pu?.nickname || pu?.studentName?.split(",")[0] || "Batch mate",
+        partnerGender: pu?.gender || "unknown",
+        lastMsg: last?.text || "start the convo",
+        lastTime: last?.time || ""
+      });
+    });
+    socket.emit("convos_list", list);
+  });
+
+  socket.on("named_message", ({ partnerId, text }) => {
+    const key = getKey(socket.id, partnerId);
+    if (!namedConvos.has(key)) namedConvos.set(key, { messages: [] });
+    const time = new Date().toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" });
+    namedConvos.get(key).messages.push({ from: socket.id, text, time });
+    const ps = io.sockets.sockets.get(partnerId);
+    if (ps) ps.emit("named_receive", { fromId: socket.id, text, time });
+    socket.emit("named_sent", { text, time });
+  });
+
+  socket.on("named_typing", ({ partnerId }) => { const ps=io.sockets.sockets.get(partnerId); if(ps) ps.emit("named_partner_typing"); });
+  socket.on("named_stop_typing", ({ partnerId }) => { const ps=io.sockets.sockets.get(partnerId); if(ps) ps.emit("named_partner_stop_typing"); });
+
+  socket.on("get_convo_history", ({ partnerId }) => {
+    const key = getKey(socket.id, partnerId);
+    socket.emit("convo_history", { messages: namedConvos.get(key)?.messages || [], partnerId });
+  });
+
   socket.on("disconnect", () => {
-    leaveRoom(socket);
-    waitingQueue = waitingQueue.filter(id => id !== socket.id);
-    socketToUser.delete(socket.id);
+    leaveAnon(socket);
+    anonQueue = anonQueue.filter(id => id !== socket.id);
+    users.delete(socket.id);
   });
 
-  function leaveRoom(sock) {
-    const roomId = socketToRoom.get(sock.id);
+  function leaveAnon(sock) {
+    const roomId = socketToAnonRoom.get(sock.id);
     if (!roomId) return;
-    sock.to(roomId).emit("partner_left");
+    sock.to(roomId).emit("anon_partner_left");
     sock.leave(roomId);
-    socketToRoom.delete(sock.id);
-    const members = rooms.get(roomId);
-    if (members) {
-      members.filter(id => id !== sock.id).forEach(id => socketToRoom.delete(id));
-      rooms.delete(roomId);
-    }
+    socketToAnonRoom.delete(sock.id);
+    const members = anonRooms.get(roomId);
+    if (members) { members.filter(id=>id!==sock.id).forEach(id=>socketToAnonRoom.delete(id)); anonRooms.delete(roomId); }
   }
 });
 
