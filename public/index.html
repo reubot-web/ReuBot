@@ -4,6 +4,68 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>ReuBot</title>
+
+  <button onclick="findMatch()">Start Chat</button>
+
+<div id="chat" style="display:none;">
+  <div id="messages"></div>
+  <input id="msgInput" placeholder="Type message..." />
+  <button onclick="sendMessage()">Send</button>
+
+  <br><br>
+  <button onclick="requestReveal()">Reveal Identity</button>
+  <button onclick="leaveChat()">Leave Chat</button>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+  const chatDiv = document.getElementById("chat");
+  const messages = document.getElementById("messages");
+
+  function findMatch() {
+    socket.emit("findMatch");
+  }
+
+  socket.on("matched", () => {
+    alert("Matched! You can now chat anonymously.");
+    chatDiv.style.display = "block";
+  });
+
+  function sendMessage() {
+    const msg = document.getElementById("msgInput").value;
+    socket.emit("sendMessage", msg);
+    document.getElementById("msgInput").value = "";
+  }
+
+  socket.on("receiveMessage", (msg) => {
+    messages.innerHTML += "<p>" + msg + "</p>";
+  });
+
+  function requestReveal() {
+    socket.emit("revealRequest");
+  }
+
+  socket.on("partnerWantsReveal", () => {
+    if (confirm("Your partner wants to reveal identity. Accept?")) {
+      socket.emit("acceptReveal");
+    }
+  });
+
+  socket.on("revealIdentity", (id) => {
+    alert("Identity Revealed! ID: " + id);
+  });
+
+  function leaveChat() {
+    socket.emit("leaveChat");
+    location.reload();
+  }
+
+  socket.on("partnerLeft", () => {
+    alert("Partner left the chat.");
+    location.reload();
+  });
+  
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <script src="/socket.io/socket.io.js"></script>
 <style>
