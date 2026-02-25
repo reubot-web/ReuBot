@@ -939,5 +939,121 @@ document.getElementById("editBtn").addEventListener("click", () => {
 });
 
 </script>
+
+  <script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+
+// ===== DEBUG CONNECTION =====
+socket.on("connect", () => {
+  console.log("✅ Connected:", socket.id);
+});
+
+socket.on("disconnect", () => {
+  console.log("❌ Disconnected");
+});
+
+// ===== VARIABLES =====
+let myRevealed = false;
+let partnerRevealed = false;
+let partnerUsername = "";
+let nickname = "";
+let studentName = "";
+let adviserName = "";
+
+// ===== START CHAT BUTTON =====
+document.getElementById("startBtn").addEventListener("click", () => {
+
+  studentName = document.getElementById("studentName").value;
+  adviserName = document.getElementById("adviserName").value;
+  nickname = document.getElementById("nickname").value;
+
+  console.log("🚀 Emitting find_match...");
+
+  socket.emit("find_match", {
+    schoolYear: "2023-2024",
+    studentName: studentName,
+    adviserName: adviserName,
+    gender: "any"
+  });
+});
+
+// ===== SEARCHING =====
+socket.on("searching", () => {
+  console.log("🔍 Searching for partner...");
+});
+
+// ===== MATCHED =====
+socket.on("matched", (data) => {
+  console.log("🎉 Matched with:", data.partnerId);
+  alert("Matched! You can now chat.");
+});
+
+// ===== AUTH ERROR =====
+socket.on("auth_error", () => {
+  alert("Authentication failed. Check name/adviser.");
+});
+
+// ===== SEND MESSAGE =====
+document.getElementById("sendBtn").addEventListener("click", () => {
+  const messageInput = document.getElementById("messageInput");
+  const text = messageInput.value;
+
+  if (!text) return;
+
+  socket.emit("send_message", { text });
+  addMessage("You", text);
+  messageInput.value = "";
+});
+
+// ===== RECEIVE MESSAGE =====
+socket.on("receive_message", ({ text }) => {
+  addMessage("Stranger", text);
+});
+
+// ===== REVEAL =====
+document.getElementById("revealBtn").addEventListener("click", () => {
+  socket.emit("reveal_username", { username: nickname });
+  myRevealed = true;
+  checkRevealStatus();
+});
+
+socket.on("partner_revealed", ({ username }) => {
+  partnerUsername = username;
+  partnerRevealed = true;
+  alert("Partner revealed as: " + username);
+  checkRevealStatus();
+});
+
+// ===== ADD FRIEND BUTTON =====
+function checkRevealStatus() {
+  if (myRevealed && partnerRevealed) {
+    document.getElementById("addFriendBtn").style.display = "block";
+  }
+}
+
+document.getElementById("addFriendBtn").addEventListener("click", () => {
+  socket.emit("add_friend", {
+    partnerName: partnerUsername
+  });
+  alert("Friend added!");
+});
+
+// ===== LEAVE =====
+document.getElementById("leaveBtn").addEventListener("click", () => {
+  socket.emit("leave_chat");
+  alert("You left the chat.");
+});
+
+// ===== HELPER =====
+function addMessage(sender, text) {
+  const chatBox = document.getElementById("chatBox");
+  const msg = document.createElement("div");
+  msg.textContent = sender + ": " + text;
+  chatBox.appendChild(msg);
+}
+
+</script>
 </body>
+
 </html>
