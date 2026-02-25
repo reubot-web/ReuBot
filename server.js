@@ -32,6 +32,27 @@ function validate(schoolYear, name, adviser) {
 // conversations[studentName] = [ { partnerName, msgs: [{dir,text}], date } ]
 const conversations = new Map();
 
+// ── FRIEND SYSTEM ──
+const friends = new Map(); 
+// friends[studentName] = [friendStudentName]
+
+function getFriends(studentName) {
+  const key = studentName.toUpperCase().trim();
+  if (!friends.has(key)) friends.set(key, []);
+  return friends.get(key);
+}
+
+function addFriend(userA, userB) {
+  const a = userA.toUpperCase().trim();
+  const b = userB.toUpperCase().trim();
+
+  const listA = getFriends(a);
+  const listB = getFriends(b);
+
+  if (!listA.includes(b)) listA.push(b);
+  if (!listB.includes(a)) listB.push(a);
+}
+
 function getConvos(studentName) {
   const key = studentName.toUpperCase().trim();
   if (!conversations.has(key)) conversations.set(key, []);
@@ -63,6 +84,11 @@ app.post('/api/convos/:studentName', (req, res) => {
   res.json({ ok: true });
 });
 
+app.get('/api/friends/:studentName', (req, res) => {
+  const name = decodeURIComponent(req.params.studentName).toUpperCase().trim();
+  res.json(getFriends(name));
+});
+
 // ── SOCKET STATE ──
 let waitingQueue = [];
 const rooms = new Map();       // roomId -> [sid1, sid2]
@@ -70,6 +96,14 @@ const socketToRoom = new Map();
 const socketToUser = new Map(); // sid -> { studentName, username }
 
 io.on("connection", (socket) => {
+
+  // Add friend
+socket.on("add_friend", ({ partnerName }) => {
+  const user = socketToUser.get(socket.id);
+  if (!user) return;
+
+  addFriend(user.studentName, partnerName);
+});
 
   // Find match
   socket.on("find_match", ({ schoolYear, studentName, adviserName, gender }) => {
