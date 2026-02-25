@@ -940,4 +940,51 @@ document.getElementById("editBtn").addEventListener("click", () => {
 </script>
 
 </body>
+
+  <body>
+
+<!-- Chat UI mo dito -->
+
+<button id="revealBtn">Reveal</button>
+<button id="addFriendBtn" style="display:none;">Add Friend</button>
+
+<script>
+const socket = io();
+
+let myRevealed = false;
+let partnerRevealed = false;
+let partnerUsername = "";
+
+// REVEAL BUTTON
+document.getElementById("revealBtn").addEventListener("click", () => {
+  socket.emit("reveal_username", { username: nickname });
+  myRevealed = true;
+  checkRevealStatus();
+});
+
+// PARTNER REVEALED
+socket.on("partner_revealed", ({ username }) => {
+  partnerRevealed = true;
+  partnerUsername = username;
+  checkRevealStatus();
+});
+
+// CHECK BOTH REVEALED
+function checkRevealStatus() {
+  if (myRevealed && partnerRevealed) {
+    document.getElementById("addFriendBtn").style.display = "block";
+  }
+}
+
+// ADD FRIEND BUTTON
+document.getElementById("addFriendBtn").addEventListener("click", () => {
+  socket.emit("add_friend", {
+    partnerName: partnerUsername
+  });
+
+  alert("Friend added!");
+});
+
+</script>
+</body>
 </html>
