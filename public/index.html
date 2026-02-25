@@ -491,7 +491,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); display: flex; 
     <button class="delete-btn" onclick="confirmDeleteAccount()">Delete Account</button>
 
     <!-- Edit username modal -->
-    <div class="edit-nick-modal" id="editUsernameModal" onclick="if(event.target===this)this.classList.remove('show')">
+    <div class="edit-nick-modal" id="editNickModal" style="position:fixed;z-index:9999;" onclick="if(event.target===this)this.classList.remove('show')">
       <div class="edit-nick-sheet">
         <div class="modal-title">Edit Username</div>
         <input class="field-input" id="editUsernameInput" placeholder="@new_username" maxlength="30">
@@ -880,8 +880,12 @@ function closeSubScreen(id) {
 // SETTINGS ACTIONS
 function openEditNick() {
   document.getElementById('editNickInput').value = userData.nickname || '';
-  document.getElementById('editNickModal').classList.add('show');
+  const modal = document.getElementById('editNickModal');
+  modal.classList.add('show');
+  modal.style.position = 'fixed';
+  modal.style.zIndex = '9999';
 }
+
 function saveNickname() {
   const val = document.getElementById('editNickInput').value.trim();
   if (!val) return;
