@@ -94,6 +94,8 @@ let waitingQueue = [];
 const rooms = new Map();       // roomId -> [sid1, sid2]
 const socketToRoom = new Map();
 const socketToUser = new Map(); // sid -> { studentName, username }
+const roomMsgCount = new Map();
+const revealAccepted = new Map();
 
 io.on("connection", (socket) => {
 
@@ -137,10 +139,16 @@ socket.on("add_friend", ({ partnerName }) => {
   });
 
   // Message
-  socket.on("send_message", ({ text }) => {
+socket.on("send_message", ({ text }) => {
     const roomId = socketToRoom.get(socket.id);
     if (!roomId) return;
-    socket.to(roomId).emit("receive_message", { text });
+    const count = (roomMsgCount.get(roomId) || 0) + 1;
+    roomMsgCount.set(roomId, count);
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    socket.to(roomId).emit("receive_message", { text, time });
+    if (count === 10) {
+      io.to(roomId).emit("prompt_reveal");
+    }
   });
 
   // Reveal identity
@@ -152,6 +160,14 @@ socket.on("add_friend", ({ partnerName }) => {
     socket.to(roomId).emit("partner_revealed", { username });
   });
 
+  socket.on("accept_reveal", ({ username }) => {
+    const roomId = socketToRoom.get(socket.id);
+    if (!roomId) return;
+    if (!revealAccepted.has(roomId)) revealAccepted.set(roomId, {});
+    revealAccepted.get(roomId)[socket.id] = username;
+    socket.to(roomId).emit("partner_accepted_reveal", { username });
+  });
+  
   // Save conversation (called when both reveal or when leaving after reveal)
   socket.on("save_convo", ({ partnerName, msgs }) => {
     const user = socketToUser.get(socket.id);
@@ -181,6 +197,8 @@ socket.on("add_friend", ({ partnerName }) => {
     if (members) {
       members.filter(id => id !== sock.id).forEach(id => socketToRoom.delete(id));
       rooms.delete(roomId);
+    roomMsgCount.delete(roomId);
+    revealAccepted.delete(roomId);
     }
   }
 });
