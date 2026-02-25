@@ -580,6 +580,18 @@ function initSocket() {
   socket.on('searching', () => { document.getElementById('onlinePill').textContent = '🔍 Searching...'; });
   socket.on('matched', () => { openAnonChat(); });
   socket.on('receive_message', ({ text, time }) => { addBubble('in', text, time); });
+  socket.on('prompt_reveal', () => { showRevealPrompt(); });
+socket.on('partner_accepted_reveal', ({ username }) => {
+    addSysMsg('✅ ' + username + ' revealed their identity!');
+    conversations.push({
+      id: Date.now(),
+      partnerUsername: username,
+      lastMsg: 'Identity revealed!',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    });
+    renderConversations();
+    setTimeout(() => { leaveChat(true); switchTab('messages'); }, 1500);
+  });
   socket.on('partner_username', ({ username: pUsername }) => {
     document.getElementById('chatPartnerName').textContent = '@' + pUsername;
     addSysMsg('Your batch mate revealed their username: @' + pUsername);
@@ -768,8 +780,8 @@ function openAnonChat() {
   document.getElementById('revealBtnEl').style.display = '';
 }
 
-function leaveChat() {
-  if (!confirm('Leave this chat?')) return;
+function leaveChat(noConfirm) {
+  if (!noConfirm && !confirm('Leave this chat?')) return;
   if (socket) socket.emit('leave_chat');
   const app = document.getElementById('app'), chat = document.getElementById('anon-chat');
   chat.classList.add('slide-left'); app.classList.remove('hidden'); app.classList.remove('slide-left');
@@ -820,6 +832,37 @@ function showRevealModal() {
 }
 function hideRevealModal() { document.getElementById('revealModal').classList.remove('show'); }
 function confirmReveal() {
+
+  function showRevealPrompt() {
+  const overlay = document.createElement('div');
+  overlay.id = 'revealPromptOverlay';
+  overlay.style.cssText = 'position:absolute;inset:0;background:rgba(26,42,58,0.6);display:flex;align-items:flex-end;z-index:99;';
+  overlay.innerHTML = `
+    <div style="background:white;border-radius:28px 28px 0 0;padding:28px 24px 44px;width:100%;display:flex;flex-direction:column;gap:14px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:#1a2a3a;letter-spacing:1px;">🔗 10 Messages Reached!</div>
+      <div style="font-size:14px;color:#4a6a8a;font-weight:600;line-height:1.5;">You've been chatting for a while! Want to reveal your username to each other?</div>
+      <div style="display:flex;gap:12px;">
+        <button onclick="declineReveal()" style="flex:1;padding:15px;background:#c9d9f0;border:none;border-radius:14px;font-family:Nunito,sans-serif;font-size:15px;font-weight:800;color:#4a6a8a;cursor:pointer;">Leave Chat</button>
+        <button onclick="acceptReveal()" style="flex:1;padding:15px;background:#8aa8c8;border:none;border-radius:14px;font-family:Nunito,sans-serif;font-size:15px;font-weight:800;color:white;cursor:pointer;">Allow ✓</button>
+      </div>
+    </div>
+  `;
+  document.querySelector('.phone').appendChild(overlay);
+}
+
+function acceptReveal() {
+  const overlay = document.getElementById('revealPromptOverlay');
+  if (overlay) overlay.remove();
+  if (!username) username = userData.nickname || 'Anonymous';
+  if (socket) socket.emit('accept_reveal', { username });
+  addSysMsg('You revealed your username: @' + username);
+}
+
+function declineReveal() {
+  const overlay = document.getElementById('revealPromptOverlay');
+  if (overlay) overlay.remove();
+  leaveChat(true);
+}
   hideRevealModal();
   if (socket) socket.emit('reveal_username', { username });
   addSysMsg('You shared your username: @' + username);
