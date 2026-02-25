@@ -928,21 +928,12 @@ function renderConversations() {
   <!-- existing HTML mo -->
 
 <script>
-async function saveNickname(newName) {
-  await fetch("/update-nickname", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ nickname: newName })
-  });
-}
+let nickname = "";
 
-// Example edit button
-document.getElementById("editBtn").addEventListener("click", async () => {
-  const newName = prompt("Enter new nickname:");
+document.getElementById("editBtn").addEventListener("click", () => {
+  const newName = prompt("Enter your nickname:");
   if (newName) {
-    await saveNickname(newName);
+    nickname = newName;
     document.getElementById("nicknameText").textContent = newName;
   }
 });
