@@ -106,6 +106,7 @@ socket.on("add_friend", ({ partnerName }) => {
 });
 
   // Find match
+  console.log("User looking for match:", socket.id);
   socket.on("find_match", ({ schoolYear, studentName, adviserName, gender }) => {
     if (!validate(schoolYear, studentName, adviserName)) {
       socket.emit("auth_error"); return;
@@ -124,6 +125,8 @@ socket.on("add_friend", ({ partnerName }) => {
       socketToRoom.set(partnerId, roomId);
       socket.join(roomId);
       partnerSocket.join(roomId);
+
+      console.log("Matched:", socket.id, "with", partnerSocket.id);
 
       socket.emit("matched", { partnerId });
       partnerSocket.emit("matched", { partnerId: socket.id });
