@@ -535,7 +535,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); display: flex; 
   <div class="edit-nick-modal" id="editNickModal" onclick="if(event.target===this)this.classList.remove('show')">
     <div class="edit-nick-sheet">
       <div class="modal-title">Edit Nickname</div>
-      <input class="field-input" id="editNickInput" placeholder="New nickname" maxlength="20">
+      <input class="field-input" id="editNickInput" placeholder="New nickname" maxlength="20"> style="height:10px;resize:none;border-radius:14px;padding:12px 14px;font-family:Nunito,sans-serif;font-size:14px;font-weight:600;color:#1a2a3a;background:#c9d9f0;border:none;outline:none;"></textarea>
       <div class="modal-btns">
         <button class="modal-cancel" onclick="document.getElementById('editNickModal').classList.remove('show')">Cancel</button>
         <button class="modal-confirm" onclick="saveNickname()">Save ✓</button>
