@@ -491,7 +491,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); display: flex; 
     <button class="delete-btn" onclick="confirmDeleteAccount()">Delete Account</button>
 
     <!-- Edit username modal -->
-    <div class="edit-nick-modal" id="editNickModal" style="position:fixed;z-index:9999;" onclick="if(event.target===this)this.classList.remove('show')">
+    <div class="edit-nick-modal" id="editUsernameModal" onclick="if(event.target===this)this.classList.remove('show')">
       <div class="edit-nick-sheet">
         <div class="modal-title">Edit Username</div>
         <input class="field-input" id="editUsernameInput" placeholder="@new_username" maxlength="30">
@@ -536,8 +536,9 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); display: flex; 
     <div class="edit-nick-sheet">
       <div class="modal-title">Edit Nickname</div>
       <input class="field-input" id="editNickInput" placeholder="New nickname" maxlength="20">
-      <button class="modal-cancel" onclick="document.getElementById('aboutMeModal').classList.remove('show')">Cancel</button>
-        <button class="modal-confirm" onclick="saveAboutMe()">Save ✓</button>
+      <div class="modal-btns">
+        <button class="modal-cancel" onclick="document.getElementById('editNickModal').classList.remove('show')">Cancel</button>
+        <button class="modal-confirm" onclick="saveNickname()">Save ✓</button>
       </div>
     </div>
   </div>
@@ -580,20 +581,6 @@ function initSocket() {
   socket.on('searching', () => { document.getElementById('onlinePill').textContent = '🔍 Searching...'; });
   socket.on('matched', () => { openAnonChat(); });
   socket.on('receive_message', ({ text, time }) => { addBubble('in', text, time); });
-  socket.on('prompt_reveal', () => { showRevealPrompt(); });
-socket.on('partner_accepted_reveal', ({ username }) => {
-    addSysMsg('✅ ' + username + ' revealed their identity!');
-    conversations.push({
-      id: Date.now(),
-      partnerUsername: username,
-      lastMsg: 'Identity revealed!',
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    });
-    renderConversations();
-    setTimeout(() => { leaveChat(true); switchTab('messages'); }, 1500);
-  });
-  socket.on('prompt_reveal', () => { showRevealPrompt(); });
-  });  // ← closing ng partner_accepted_reveal
   socket.on('partner_username', ({ username: pUsername }) => {
     document.getElementById('chatPartnerName').textContent = '@' + pUsername;
     addSysMsg('Your batch mate revealed their username: @' + pUsername);
@@ -649,19 +636,7 @@ function submitProfile() {
 
 // SPLASH
 setTimeout(() => {
-  try {
-    const hasData = loadFromStorage();
-    if (hasData && userData && userData.nickname) {
-      updateProfile();
-      initSocket();
-      renderConversations();
-      goTo('splash', 'app');
-    } else {
-      goTo('splash', 'verify');
-    }
-  } catch(e) {
-    goTo('splash', 'verify');
-  }
+  goTo('splash', 'verify');
 }, 1800);
 
 // NAV
@@ -786,8 +761,8 @@ function openAnonChat() {
   document.getElementById('revealBtnEl').style.display = '';
 }
 
-function leaveChat(noConfirm) {
-  if (!noConfirm && !confirm('Leave this chat?')) return;
+function leaveChat() {
+  if (!confirm('Leave this chat?')) return;
   if (socket) socket.emit('leave_chat');
   const app = document.getElementById('app'), chat = document.getElementById('anon-chat');
   chat.classList.add('slide-left'); app.classList.remove('hidden'); app.classList.remove('slide-left');
@@ -838,37 +813,6 @@ function showRevealModal() {
 }
 function hideRevealModal() { document.getElementById('revealModal').classList.remove('show'); }
 function confirmReveal() {
-
-  function showRevealPrompt() {
-  const overlay = document.createElement('div');
-  overlay.id = 'revealPromptOverlay';
-  overlay.style.cssText = 'position:absolute;inset:0;background:rgba(26,42,58,0.6);display:flex;align-items:flex-end;z-index:99;';
-  overlay.innerHTML = `
-    <div style="background:white;border-radius:28px 28px 0 0;padding:28px 24px 44px;width:100%;display:flex;flex-direction:column;gap:14px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:#1a2a3a;letter-spacing:1px;">🔗 10 Messages Reached!</div>
-      <div style="font-size:14px;color:#4a6a8a;font-weight:600;line-height:1.5;">You've been chatting for a while! Want to reveal your username to each other?</div>
-      <div style="display:flex;gap:12px;">
-        <button onclick="declineReveal()" style="flex:1;padding:15px;background:#c9d9f0;border:none;border-radius:14px;font-family:Nunito,sans-serif;font-size:15px;font-weight:800;color:#4a6a8a;cursor:pointer;">Leave Chat</button>
-        <button onclick="acceptReveal()" style="flex:1;padding:15px;background:#8aa8c8;border:none;border-radius:14px;font-family:Nunito,sans-serif;font-size:15px;font-weight:800;color:white;cursor:pointer;">Allow ✓</button>
-      </div>
-    </div>
-  `;
-  document.querySelector('.phone').appendChild(overlay);
-}
-
-function acceptReveal() {
-  const overlay = document.getElementById('revealPromptOverlay');
-  if (overlay) overlay.remove();
-  if (!username) username = userData.nickname || 'Anonymous';
-  if (socket) socket.emit('accept_reveal', { username });
-  addSysMsg('You revealed your username: @' + username);
-}
-
-function declineReveal() {
-  const overlay = document.getElementById('revealPromptOverlay');
-  if (overlay) overlay.remove();
-  leaveChat(true);
-}
   hideRevealModal();
   if (socket) socket.emit('reveal_username', { username });
   addSysMsg('You shared your username: @' + username);
@@ -888,13 +832,11 @@ function openEditNick() {
   document.getElementById('editNickInput').value = userData.nickname || '';
   document.getElementById('editNickModal').classList.add('show');
 }
-
 function saveNickname() {
   const val = document.getElementById('editNickInput').value.trim();
   if (!val) return;
   userData.nickname = val;
   updateProfile();
-  saveToStorage();
   document.getElementById('editNickModal').classList.remove('show');
 }
 function openAboutMeEdit() {
@@ -974,136 +916,5 @@ function renderConversations() {
   saveToStorage();
 }
 </script>
-
-  <!-- existing HTML mo -->
-
-<script>
-let nickname = "";
-
-document.getElementById("editBtn").addEventListener("click", () => {
-  const newName = prompt("Enter your nickname:");
-  if (newName) {
-    nickname = newName;
-    document.getElementById("nicknameText").textContent = newName;
-  }
-});
-
-</script>
-
-  <script src="/socket.io/socket.io.js"></script>
-<script>
-const socket = io();
-
-// ===== DEBUG CONNECTION =====
-socket.on("connect", () => {
-  console.log("✅ Connected:", socket.id);
-});
-
-socket.on("disconnect", () => {
-  console.log("❌ Disconnected");
-});
-
-// ===== VARIABLES =====
-let myRevealed = false;
-let partnerRevealed = false;
-let partnerUsername = "";
-let nickname = "";
-let studentName = "";
-let adviserName = "";
-
-// ===== START CHAT BUTTON =====
-document.getElementById("startBtn").addEventListener("click", () => {
-
-  studentName = document.getElementById("studentName").value;
-  adviserName = document.getElementById("adviserName").value;
-  nickname = document.getElementById("nickname").value;
-
-  console.log("🚀 Emitting find_match...");
-
-  socket.emit("find_match", {
-    schoolYear: "2023-2024",
-    studentName: studentName,
-    adviserName: adviserName,
-    gender: "any"
-  });
-});
-
-// ===== SEARCHING =====
-socket.on("searching", () => {
-  console.log("🔍 Searching for partner...");
-});
-
-// ===== MATCHED =====
-socket.on("matched", (data) => {
-  console.log("🎉 Matched with:", data.partnerId);
-  alert("Matched! You can now chat.");
-});
-
-// ===== AUTH ERROR =====
-socket.on("auth_error", () => {
-  alert("Authentication failed. Check name/adviser.");
-});
-
-// ===== SEND MESSAGE =====
-document.getElementById("sendBtn").addEventListener("click", () => {
-  const messageInput = document.getElementById("messageInput");
-  const text = messageInput.value;
-
-  if (!text) return;
-
-  socket.emit("send_message", { text });
-  addMessage("You", text);
-  messageInput.value = "";
-});
-
-// ===== RECEIVE MESSAGE =====
-socket.on("receive_message", ({ text }) => {
-  addMessage("Stranger", text);
-});
-
-// ===== REVEAL =====
-document.getElementById("revealBtn").addEventListener("click", () => {
-  socket.emit("reveal_username", { username: nickname });
-  myRevealed = true;
-  checkRevealStatus();
-});
-
-socket.on("partner_revealed", ({ username }) => {
-  partnerUsername = username;
-  partnerRevealed = true;
-  alert("Partner revealed as: " + username);
-  checkRevealStatus();
-});
-
-// ===== ADD FRIEND BUTTON =====
-function checkRevealStatus() {
-  if (myRevealed && partnerRevealed) {
-    document.getElementById("addFriendBtn").style.display = "block";
-  }
-}
-
-document.getElementById("addFriendBtn").addEventListener("click", () => {
-  socket.emit("add_friend", {
-    partnerName: partnerUsername
-  });
-  alert("Friend added!");
-});
-
-// ===== LEAVE =====
-document.getElementById("leaveBtn").addEventListener("click", () => {
-  socket.emit("leave_chat");
-  alert("You left the chat.");
-});
-
-// ===== HELPER =====
-function addMessage(sender, text) {
-  const chatBox = document.getElementById("chatBox");
-  const msg = document.createElement("div");
-  msg.textContent = sender + ": " + text;
-  chatBox.appendChild(msg);
-}
-
-</script>
 </body>
-
 </html>
