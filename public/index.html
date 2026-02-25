@@ -649,13 +649,17 @@ function submitProfile() {
 
 // SPLASH
 setTimeout(() => {
-  if (loadFromStorage() && userData.nickname) {
-    // Returning user - go straight to app
-    updateProfile();
-    initSocket();
-    renderConversations();
-    goTo('splash', 'app');
-  } else {
+  try {
+    const hasData = loadFromStorage();
+    if (hasData && userData && userData.nickname) {
+      updateProfile();
+      initSocket();
+      renderConversations();
+      goTo('splash', 'app');
+    } else {
+      goTo('splash', 'verify');
+    }
+  } catch(e) {
     goTo('splash', 'verify');
   }
 }, 1800);
