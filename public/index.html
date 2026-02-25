@@ -594,7 +594,6 @@ socket.on('partner_accepted_reveal', ({ username }) => {
   });
   socket.on('prompt_reveal', () => { showRevealPrompt(); });
   });  // ← closing ng partner_accepted_reveal
-socket.on('prompt_reveal', () => { showRevealPrompt(); });   // ← dagdag ito
   socket.on('partner_username', ({ username: pUsername }) => {
     document.getElementById('chatPartnerName').textContent = '@' + pUsername;
     addSysMsg('Your batch mate revealed their username: @' + pUsername);
