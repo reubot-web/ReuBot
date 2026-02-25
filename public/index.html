@@ -882,12 +882,9 @@ function closeSubScreen(id) {
 // SETTINGS ACTIONS
 function openEditNick() {
   document.getElementById('editNickInput').value = userData.nickname || '';
-  const modal = document.getElementById('editNickModal');
-  modal.classList.add('show');
-  modal.style.position = 'fixed';
-  modal.style.zIndex = '9999';
+  document.getElementById('editNickModal').classList.add('show');
 }
-'''
+
 function saveNickname() {
   const val = document.getElementById('editNickInput').value.trim();
   if (!val) return;
