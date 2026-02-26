@@ -775,7 +775,8 @@ function openAnonChat() {
   document.getElementById('revealBtnEl').style.display = '';
 }
 
-function leaveChat() {
+function leaveChat(noConfirm) {
+  if (!noConfirm && !confirm('Leave this chat?')) return;
   if (!confirm('Leave this chat?')) return;
   if (socket) socket.emit('leave_chat');
   const app = document.getElementById('app'), chat = document.getElementById('anon-chat');
