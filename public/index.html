@@ -4,6 +4,31 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ReuBot</title>
+</head>
+<body>
+  <h2>Live Chat</h2>
+    <ul id="messages"></ul>
+    <input id="input" autocomplete="off" placeholder="Type message..." />
+    <button onclick="sendMessage()">Send</button>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        function sendMessage() {
+            const input = document.getElementById("input");
+            socket.emit("chat message", input.value);
+            input.value = "";
+        }
+
+        socket.on("chat message", function(msg) {
+            const item = document.createElement("li");
+            item.textContent = msg;
+            document.getElementById("messages").appendChild(item);
+        });
+    </script>
+</body>
+</html>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <script src="/socket.io/socket.io.js"></script>
 <style>
