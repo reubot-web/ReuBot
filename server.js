@@ -28,53 +28,21 @@ function validate(schoolYear, name, adviser) {
   return sec.adviser.toLowerCase() === adviser.trim().toLowerCase();
 }
 
-// ── PERSISTENT STORAGE (in-memory, survives reconnects within session) ──
-// conversations[studentName] = [ { partnerName, msgs: [{dir,text}], date } ]
-const conversations = new Map();
-
-function getConvos(studentName) {
-  const key = studentName.toUpperCase().trim();
-  if (!conversations.has(key)) conversations.set(key, []);
-  return conversations.get(key);
-}
-
-function saveConvo(studentName, partnerName, msgs) {
-  const key = studentName.toUpperCase().trim();
-  const list = getConvos(key);
-  const existing = list.find(c => c.partnerName === partnerName);
-  if (existing) {
-    existing.msgs = msgs;
-    existing.date = new Date().toLocaleDateString();
-  } else {
-    list.push({ partnerName, msgs, date: new Date().toLocaleDateString() });
-  }
-}
-
-// REST endpoints for conversations
-app.get('/api/convos/:studentName', (req, res) => {
-  const name = decodeURIComponent(req.params.studentName).toUpperCase().trim();
-  res.json(getConvos(name));
-});
-
-app.post('/api/convos/:studentName', (req, res) => {
-  const name = decodeURIComponent(req.params.studentName).toUpperCase().trim();
-  const { partnerName, msgs } = req.body;
-  saveConvo(name, partnerName, msgs);
-  res.json({ ok: true });
-});
-
 // ── SOCKET STATE ──
 let waitingQueue = [];
-const rooms = new Map();       // roomId -> [sid1, sid2]
+const rooms = new Map();
 const socketToRoom = new Map();
-const socketToUser = new Map(); // sid -> { studentName, username }
+const socketToUser = new Map();
+const roomMsgCount = new Map();
+const revealAccepted = new Map();
 
 io.on("connection", (socket) => {
 
   // Find match
-  socket.on("find_match", ({ schoolYear, studentName, adviserName, gender }) => {
+  socket.on("find_match", ({ schoolYear, studentName, adviserName }) => {
     if (!validate(schoolYear, studentName, adviserName)) {
-      socket.emit("auth_error"); return;
+      socket.emit("auth_error", { message: "Not in batch list." });
+      return;
     }
     socketToUser.set(socket.id, { studentName: studentName.toUpperCase().trim(), username: "" });
     leaveRoom(socket);
@@ -82,49 +50,55 @@ io.on("connection", (socket) => {
     if (waitingQueue.length > 0) {
       const partnerId = waitingQueue.shift();
       const partnerSocket = io.sockets.sockets.get(partnerId);
-      if (!partnerSocket) { waitingQueue.push(socket.id); socket.emit("searching"); return; }
-
-      const roomId = `room_${Date.now()}`;
+      if (!partnerSocket) {
+        waitingQueue.push(socket.id);
+        return;
+      }
+      const roomId = "room_" + Date.now();
       rooms.set(roomId, [socket.id, partnerId]);
       socketToRoom.set(socket.id, roomId);
       socketToRoom.set(partnerId, roomId);
+      roomMsgCount.set(roomId, 0);
       socket.join(roomId);
       partnerSocket.join(roomId);
-
-      socket.emit("matched", { partnerId });
-      partnerSocket.emit("matched", { partnerId: socket.id });
+      socket.emit("matched");
+      partnerSocket.emit("matched");
     } else {
       waitingQueue.push(socket.id);
-      socket.emit("searching");
     }
   });
 
-  // Message
+  // Send message
   socket.on("send_message", ({ text }) => {
     const roomId = socketToRoom.get(socket.id);
     if (!roomId) return;
-    socket.to(roomId).emit("receive_message", { text });
+    const count = (roomMsgCount.get(roomId) || 0) + 1;
+    roomMsgCount.set(roomId, count);
+    const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    socket.to(roomId).emit("receive_message", { text, time });
+    if (count === 10) {
+      io.to(roomId).emit("prompt_reveal");
+    }
   });
 
-  // Reveal identity
-  socket.on("reveal_username", ({ username }) => {
+  // Accept reveal
+  socket.on("accept_reveal", ({ username }) => {
     const roomId = socketToRoom.get(socket.id);
     if (!roomId) return;
-    const user = socketToUser.get(socket.id);
-    if (user) user.username = username;
-    socket.to(roomId).emit("partner_revealed", { username });
-  });
-
-  // Save conversation (called when both reveal or when leaving after reveal)
-  socket.on("save_convo", ({ partnerName, msgs }) => {
-    const user = socketToUser.get(socket.id);
-    if (!user) return;
-    saveConvo(user.studentName, partnerName, msgs);
+    if (!revealAccepted.has(roomId)) revealAccepted.set(roomId, {});
+    revealAccepted.get(roomId)[socket.id] = username;
+    socket.to(roomId).emit("partner_accepted_reveal", { username });
   });
 
   // Typing
-  socket.on("typing", () => { const r = socketToRoom.get(socket.id); if (r) socket.to(r).emit("partner_typing"); });
-  socket.on("stop_typing", () => { const r = socketToRoom.get(socket.id); if (r) socket.to(r).emit("partner_stop_typing"); });
+  socket.on("typing", () => {
+    const r = socketToRoom.get(socket.id);
+    if (r) socket.to(r).emit("partner_typing");
+  });
+  socket.on("stop_typing", () => {
+    const r = socketToRoom.get(socket.id);
+    if (r) socket.to(r).emit("partner_stop_typing");
+  });
 
   // Leave
   socket.on("leave_chat", () => leaveRoom(socket));
@@ -145,8 +119,13 @@ io.on("connection", (socket) => {
       members.filter(id => id !== sock.id).forEach(id => socketToRoom.delete(id));
       rooms.delete(roomId);
     }
+    roomMsgCount.delete(roomId);
+    revealAccepted.delete(roomId);
   }
 });
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log("ReuBot running on port " + PORT));
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`✅ ReuBot running on port ${PORT}`));
