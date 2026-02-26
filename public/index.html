@@ -600,7 +600,13 @@ function initSocket() {
   });
   socket.on('auth_error', ({ message }) => { alert('❌ ' + message); switchTab('search'); });
 }
-
+socket.on('prompt_reveal', () => { showRevealPrompt(); });
+socket.on('partner_accepted_reveal', ({ username }) => {
+    addSysMsg('✅ ' + username + ' revealed their identity!');
+    conversations.push({ id: Date.now(), partnerUsername: username, lastMsg: 'Identity revealed!', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+    renderConversations();
+    setTimeout(() => { leaveChat(true); switchTab('messages'); }, 1500);
+  });
 
 // ICON PICKER
 const ICONS = ['🐱','🐶','🦊','🐻','🐼','🐨','🐯','🦁','🐸','🐧','🦋','🌸','⭐','🌈','🎭','🎨','🎮','🎵','🍀','🔥'];
