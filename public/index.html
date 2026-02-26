@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ReuBot</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 :root {
@@ -600,13 +600,7 @@ function initSocket() {
   });
   socket.on('auth_error', ({ message }) => { alert('❌ ' + message); switchTab('search'); });
 }
-socket.on('prompt_reveal', () => { showRevealPrompt(); });
-socket.on('partner_accepted_reveal', ({ username }) => {
-    addSysMsg('✅ ' + username + ' revealed their identity!');
-    conversations.push({ id: Date.now(), partnerUsername: username, lastMsg: 'Identity revealed!', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
-    renderConversations();
-    setTimeout(() => { leaveChat(true); switchTab('messages'); }, 1500);
-  });
+
 
 // ICON PICKER
 const ICONS = ['🐱','🐶','🦊','🐻','🐼','🐨','🐯','🦁','🐸','🐧','🦋','🌸','⭐','🌈','🎭','🎨','🎮','🎵','🍀','🔥'];
@@ -775,8 +769,7 @@ function openAnonChat() {
   document.getElementById('revealBtnEl').style.display = '';
 }
 
-function leaveChat(noConfirm) {
-  if (!noConfirm && !confirm('Leave this chat?')) return;
+function leaveChat() {
   if (!confirm('Leave this chat?')) return;
   if (socket) socket.emit('leave_chat');
   const app = document.getElementById('app'), chat = document.getElementById('anon-chat');
@@ -832,27 +825,7 @@ function confirmReveal() {
   if (socket) socket.emit('reveal_username', { username });
   addSysMsg('You shared your username: @' + username);
 }
-function showRevealPrompt() {
-  const ex = document.getElementById('revealPromptOverlay');
-  if (ex) ex.remove();
-  const overlay = document.createElement('div');
-  overlay.id = 'revealPromptOverlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(26,42,58,0.6);display:flex;align-items:flex-end;z-index:9999;';
-  overlay.innerHTML = '<div style="background:white;border-radius:28px 28px 0 0;padding:28px 24px 44px;width:100%;display:flex;flex-direction:column;gap:14px;"><div style="font-family:Bebas Neue,sans-serif;font-size:26px;color:#1a2a3a;">🔗 10 Messages Reached!</div><div style="font-size:14px;color:#4a6a8a;font-weight:600;">Want to reveal your username?</div><div style="display:flex;gap:12px;"><button onclick="declineReveal()" style="flex:1;padding:15px;background:#c9d9f0;border:none;border-radius:14px;font-size:15px;font-weight:800;color:#4a6a8a;cursor:pointer;">Leave Chat</button><button onclick="acceptReveal()" style="flex:1;padding:15px;background:#8aa8c8;border:none;border-radius:14px;font-size:15px;font-weight:800;color:white;cursor:pointer;">Allow ✓</button></div></div>';
-  document.body.appendChild(overlay);
-}
-function acceptReveal() {
-  const overlay = document.getElementById('revealPromptOverlay');
-  if (overlay) overlay.remove();
-  const myUsername = userData.nickname || 'Anonymous';
-  if (socket) socket.emit('accept_reveal', { username: myUsername });
-  addSysMsg('You revealed: ' + myUsername);
-}
-function declineReveal() {
-  const overlay = document.getElementById('revealPromptOverlay');
-  if (overlay) overlay.remove();
-  leaveChat(true);
-}
+
 
 // SUB-SCREENS
 function openSubScreen(id) {
