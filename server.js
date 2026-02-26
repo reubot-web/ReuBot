@@ -17,7 +17,7 @@ io.on("connection", (socket) => {console.log("User connected");
 });
 
 server.listen(3000, () => {
-  console.log("Server running on http
+  console.log("Server running on http://localhost:3000");
 });
 
 // ── DATABASE ──
