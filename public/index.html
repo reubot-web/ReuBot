@@ -816,16 +816,17 @@ function scrollChat() { const m = document.getElementById('chatMessages'); m.scr
 
 // REVEAL
 function showRevealModal() {
-  if (!username) { alert('Set your username first sa Profile tab! 👆'); switchTab('profile'); return; }
-  document.getElementById('modalUsernameShow').textContent = '@' + username;
+  const revealName = userData.studentName ? userData.studentName.split(',')[0].trim() : '';
+  document.getElementById('modalUsernameShow').textContent = revealName;
   document.getElementById('revealModal').classList.add('show');
 }
 function hideRevealModal() { document.getElementById('revealModal').classList.remove('show'); }
 function confirmReveal() {
   hideRevealModal();
   const myName = userData.studentName ? userData.studentName.split(',')[0].trim() : username;
-  if (socket) socket.emit('reveal_username', { username: myName });
-  addSysMsg('You shared your name: ' + myName);
+  const revealName = userData.studentName ? userData.studentName.split(',')[0].trim() : '';
+if (socket) socket.emit('reveal_username', { username: revealName });
+addSysMsg('You revealed your name: ' + revealName);
 }
 
 
