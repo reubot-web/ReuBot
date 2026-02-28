@@ -577,11 +577,12 @@ let typingTimer = null;
 
 // SOCKET
 function initSocket() {
+  if (socket) return;
   socket = io();
   socket.on('searching', () => { document.getElementById('onlinePill').textContent = '🔍 Searching...'; });
   socket.on('matched', () => { openAnonChat(); });
   socket.on('receive_message', ({ text, time }) => { addBubble('in', text, time); });
-  socket.on('partner_accepted_reveal', ({ username: pUsername }) => {
+  socket.on('partner_revealed', ({ username: pUsername }) => {
     document.getElementById('chatPartnerName').textContent = '@' + pUsername;
     addSysMsg('Your batch mate revealed their username: @' + pUsername);
     const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -785,7 +786,8 @@ function leaveChat() {
 function sendMsg() {
   const input = document.getElementById('chatInput');
   const text = input.value.trim();
-  if (!text) return;
+ if (!text) return;
+if (!socket) { alert('Not connected!'); return; }
   const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   addBubble('out', text, now);
   if (socket) socket.emit('send_message', { text });
