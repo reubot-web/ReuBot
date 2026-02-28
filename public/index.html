@@ -455,7 +455,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); display: flex; 
     </div>
     <div class="chat-input-area">
       <input class="chat-input" id="chatInput" placeholder="Type a message..."
-       oninput="onTyping()" onkeydown="if(event.key==='Enter'){event.preventDefault();sendMsg()}">
+        oninput="onTyping()" onkeydown="if(event.key==='Enter')sendMsg()">
       <button class="send-btn" onclick="sendMsg()">
         <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
       </button>
@@ -497,7 +497,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); display: flex; 
         <input class="field-input" id="editUsernameInput" placeholder="@new_username" maxlength="30">
         <div class="modal-btns">
           <button class="modal-cancel" onclick="document.getElementById('editUsernameModal').classList.remove('show')">Cancel</button>
-          <button class="modal-confirm" onclick="saveEditUsername()">Save ✓</button>
+          <button class="modal-confirm" onclick="saveUsername()">Save ✓</button>
         </div>
       </div>
     </div>
@@ -577,12 +577,11 @@ let typingTimer = null;
 
 // SOCKET
 function initSocket() {
-  if (socket) return;
   socket = io();
   socket.on('searching', () => { document.getElementById('onlinePill').textContent = '🔍 Searching...'; });
   socket.on('matched', () => { openAnonChat(); });
   socket.on('receive_message', ({ text, time }) => { addBubble('in', text, time); });
-  socket.on('partner_revealed', ({ username: pUsername }) => {
+  socket.on('partner_username', ({ username: pUsername }) => {
     document.getElementById('chatPartnerName').textContent = '@' + pUsername;
     addSysMsg('Your batch mate revealed their username: @' + pUsername);
     const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -637,15 +636,7 @@ function submitProfile() {
 
 // SPLASH
 setTimeout(() => {
-  if (loadFromStorage() && userData.nickname) {
-    // Returning user - go straight to app
-    updateProfile();
-    initSocket();
-    renderConversations();
-    goTo('splash', 'app');
-  } else {
-    goTo('splash', 'verify');
-  }
+  goTo('splash', 'verify');
 }, 1800);
 
 // NAV
@@ -751,10 +742,7 @@ function saveUsername() {
 // SEARCH
 function startSearching() {
   switchTab('searching');
-if (!socket) initSocket();
-setTimeout(() => {
   if (socket) socket.emit('find_match', userData);
-}, 500);
 }
 function cancelSearch() {
   if (socket) socket.emit('leave_chat');
@@ -786,8 +774,7 @@ function leaveChat() {
 function sendMsg() {
   const input = document.getElementById('chatInput');
   const text = input.value.trim();
- if (!text) return;
-if (!socket) { alert('Not connected!'); return; }
+  if (!text) return;
   const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   addBubble('out', text, now);
   if (socket) socket.emit('send_message', { text });
@@ -827,7 +814,7 @@ function showRevealModal() {
 function hideRevealModal() { document.getElementById('revealModal').classList.remove('show'); }
 function confirmReveal() {
   hideRevealModal();
-  if (socket) socket.emit('accept_reveal', { username });
+  if (socket) socket.emit('reveal_username', { username });
   addSysMsg('You shared your username: @' + username);
 }
 
@@ -867,21 +854,13 @@ function openEditUsername() {
   document.getElementById('editUsernameInput').value = userData.username || '';
   document.getElementById('editUsernameModal').classList.add('show');
 }
-function saveEditUsername() {
+function saveUsername() {
   const val = document.getElementById('editUsernameInput').value.trim();
   if (!val) return;
   userData.username = val.startsWith('@') ? val : '@' + val;
-  username = val.startsWith('@') ? val.slice(1) : val;
   document.getElementById('acctUsernameDisplay').textContent = userData.username;
   document.getElementById('editUsernameModal').classList.remove('show');
 }
-  function saveUsername() {
-  const val = document.getElementById('usernameInput').value.trim();
-  if (!val) return;
-  username = val;
-  userData.username = '@' + val;
-  const t = document.getElementById('savedToast');
-}    
 function confirmDeleteAccount() {
   if (confirm('Delete your account? This cannot be undone.')) {
     localStorage.clear();
