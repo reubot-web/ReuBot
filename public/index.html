@@ -455,7 +455,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); display: flex; 
     </div>
     <div class="chat-input-area">
       <input class="chat-input" id="chatInput" placeholder="Type a message..."
-       oninput="onTyping()" onkeydown="if(event.key==='Enter'){event.preventDefault();sendMsg()}">
+       oninput="onTyping()" onkeydown="if(event.key==='Enter'){sendMsg();event.preventDefault()}">
       <button class="send-btn" onclick="sendMsg()">
         <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
       </button>
@@ -467,7 +467,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); display: flex; 
         <div class="modal-username-show" id="modalUsernameShow">@username</div>
         <div class="modal-btns">
           <button class="modal-cancel" onclick="hideRevealModal()">Cancel</button>
-          <button class="modal-confirm" onclick="confirmReveal()">Send ✓</button>
+         <button class="modal-confirm" onclick="saveEditUsername()">Save ✓</button>
         </div>
       </div>
     </div>
@@ -753,6 +753,8 @@ function startSearching() {
   switchTab('searching');
 if (!socket) initSocket();
 setTimeout(() => {
+if (!socket) initSocket();
+setTimeout(() => {
   if (socket) socket.emit('find_match', userData);
 }, 500);
   }
@@ -875,13 +877,14 @@ function saveEditUsername() {
   document.getElementById('acctUsernameDisplay').textContent = userData.username;
   document.getElementById('editUsernameModal').classList.remove('show');
 }
-  function saveUsername() {
-  const val = document.getElementById('usernameInput').value.trim();
+function saveEditUsername() {
+  const val = document.getElementById('editUsernameInput').value.trim();
   if (!val) return;
-  username = val;
-  userData.username = '@' + val;
-  const t = document.getElementById('savedToast');
-}    
+  userData.username = val.startsWith('@') ? val : '@' + val;
+  username = val.startsWith('@') ? val.slice(1) : val;
+  document.getElementById('acctUsernameDisplay').textContent = userData.username;
+  document.getElementById('editUsernameModal').classList.remove('show');
+}
 function confirmDeleteAccount() {
   if (confirm('Delete your account? This cannot be undone.')) {
     localStorage.clear();
