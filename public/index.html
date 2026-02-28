@@ -755,7 +755,7 @@ if (!socket) initSocket();
 setTimeout(() => {
   if (socket) socket.emit('find_match', userData);
 }, 500);
-}
+  }
 function cancelSearch() {
   if (socket) socket.emit('leave_chat');
   switchTab('search');
