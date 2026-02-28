@@ -107,12 +107,12 @@ io.on("connection", (socket) => {
   });
 
   // Reveal identity
-  socket.on("partner_username", ({ username }) => {
+ socket.on("reveal_username", ({ username }) => {
     const roomId = socketToRoom.get(socket.id);
     if (!roomId) return;
     const user = socketToUser.get(socket.id);
     if (user) user.username = username;
-    socket.to(roomId).emit("partner_accepted_reveal", { username });
+    socket.to(roomId).emit("partner_revealed", { username });
   });
 
   // Save conversation (called when both reveal or when leaving after reveal)
