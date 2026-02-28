@@ -807,11 +807,7 @@ function addBubble(dir, text, time) {
   const wrap = document.createElement('div');
   wrap.className = 'bubble-wrap ' + dir;
   wrap.innerHTML = `<div class="bubble">${text}</div><div class="bubble-time">${now}</div>`;
-  if (typing && msgs.contains(typing)) {
   msgs.insertBefore(wrap, typing);
-} else {
-  msgs.appendChild(wrap);
-}
   scrollChat();
 }
 function addSysMsg(text) {
@@ -831,7 +827,7 @@ function showRevealModal() {
 function hideRevealModal() { document.getElementById('revealModal').classList.remove('show'); }
 function confirmReveal() {
   hideRevealModal();
- if (socket) socket.emit('reveal_username', { username });
+  if (socket) socket.emit('accept_reveal', { username });
   addSysMsg('You shared your username: @' + username);
 }
 
