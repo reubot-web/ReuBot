@@ -278,7 +278,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); display: flex; 
         <div class="field-label">Your Name</div>
         <div class="autocomplete-wrap">
           <input class="field-input" id="studentName" placeholder="Type your last name..." autocomplete="off"
-            oninput="filterStudents(this.value)" onblur="hideAuto('studentList')" onfocus="filterStudents(this.value)">
+            >
           <div class="autocomplete-list" id="studentList"></div>
         </div>
       </div>
@@ -286,7 +286,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); display: flex; 
         <div class="field-label">Adviser Name</div>
         <div class="autocomplete-wrap">
           <input class="field-input" id="adviserName" placeholder="Type adviser's name..." autocomplete="off"
-            oninput="filterAdvisers(this.value)" onblur="hideAuto('adviserList')" onfocus="filterAdvisers(this.value)">
+            >
           <div class="autocomplete-list" id="adviserList"></div>
         </div>
       </div>
