@@ -107,7 +107,7 @@ io.on("connection", (socket) => {
   });
 
   // Reveal identity
- socket.on("reveal_username", ({ username }) => {
+socket.on("reveal_username", ({ username }) => {
     const roomId = socketToRoom.get(socket.id);
     if (!roomId) return;
     const user = socketToUser.get(socket.id);
