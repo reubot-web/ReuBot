@@ -454,7 +454,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); display: flex; 
       <div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
     </div>
     <div class="chat-input-area">
-      <input class="chat-input" id="chatInput" placeholder="Type a message..."
+     <input class="chat-input" id="chatInput" placeholder="Type a message..."
        oninput="onTyping()" onkeydown="if(event.key==='Enter'){event.preventDefault();sendMsg()}">
       <button class="send-btn" onclick="sendMsg()">
         <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
@@ -807,7 +807,11 @@ function addBubble(dir, text, time) {
   const wrap = document.createElement('div');
   wrap.className = 'bubble-wrap ' + dir;
   wrap.innerHTML = `<div class="bubble">${text}</div><div class="bubble-time">${now}</div>`;
+  if (typing && msgs.contains(typing)) {
   msgs.insertBefore(wrap, typing);
+} else {
+  msgs.appendChild(wrap);
+}
   scrollChat();
 }
 function addSysMsg(text) {
