@@ -831,7 +831,7 @@ function showRevealModal() {
 function hideRevealModal() { document.getElementById('revealModal').classList.remove('show'); }
 function confirmReveal() {
   hideRevealModal();
-  if (socket) socket.emit('accept_reveal', { username });
+  if (socket) socket.emit('reveal_username', { username });
   addSysMsg('You shared your username: @' + username);
 }
 
