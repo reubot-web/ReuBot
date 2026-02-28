@@ -456,8 +456,9 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); display: flex; 
     <div class="chat-input-area">
      <input class="chat-input" id="chatInput" placeholder="Type a message..."
        oninput="onTyping()" onkeydown="if(event.key==='Enter'){event.preventDefault();sendMsg()}">
-       <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
-      </button>
+    <button class="send-btn" onclick="sendMsg()">
+  <svg viewBox="0 0 24 24" width="19" height="19" fill="white"><path d="M2,21 L23,12 L2,3 L2,10 L17,12 L2,14 Z"/></svg>
+</button>
     </div>
     <div class="modal-overlay" id="revealModal" onclick="if(event.target===this)hideRevealModal()">
       <div class="modal-sheet">
