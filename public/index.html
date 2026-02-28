@@ -445,7 +445,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); display: flex; 
         <div class="chat-name-sm" id="chatPartnerName">Anonymous</div>
         <div class="chat-status" id="chatStatus">• Online</div>
       </div>
-      <button class="reveal-btn" onclick="showRevealModal()" id="revealBtnEl">Share Username</button>
+      <button class="reveal-btn" onclick="showRevealModal()" id="revealBtnEl">Share Name</button>
     </div>
     <div class="chat-messages" id="chatMessages">
       <div class="sys-msg">Connected to a batch mate! Say hi 👋</div>
@@ -823,8 +823,9 @@ function showRevealModal() {
 function hideRevealModal() { document.getElementById('revealModal').classList.remove('show'); }
 function confirmReveal() {
   hideRevealModal();
- if (socket) socket.emit('reveal_username', { username });
-  addSysMsg('You shared your username: @' + username);
+  const myName = userData.studentName ? userData.studentName.split(',')[0].trim() : username;
+  if (socket) socket.emit('reveal_username', { username: myName });
+  addSysMsg('You shared your name: ' + myName);
 }
 
 
