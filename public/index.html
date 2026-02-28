@@ -581,6 +581,7 @@ function initSocket() {
   socket.on('searching', () => { document.getElementById('onlinePill').textContent = '🔍 Searching...'; });
   socket.on('matched', () => { openAnonChat(); });
   socket.on('receive_message', ({ text, time }) => { addBubble('in', text, time); });
+  socket.on('receive_dm', ({ text }) => { addBubble('in', text); });
   socket.on('partner_revealed', ({ username: pUsername }) => {
     document.getElementById('chatPartnerName').textContent = '@' + pUsername;
     addSysMsg('Your batch mate revealed their username: @' + pUsername);
@@ -939,6 +940,23 @@ function renderConversations() {
   const chat = document.getElementById('anon-chat');
   app.classList.add('slide-left');
   chat.classList.remove('hidden');
+  setTimeout(() => app.classList.add('hidden'), 380);
+}
+  function openConvo(id) {
+  const convo = conversations.find(c => c.id === id);
+  if (!convo) return;
+  // Join private DM room
+  const myName = userData.studentName.split(',')[0].trim();
+  const partnerName = convo.partnerUsername.replace('@','');
+  socket.emit('join_dm', { myName, partnerName });
+  // Open chat screen
+  document.getElementById('chatPartnerName').textContent = convo.partnerUsername;
+  document.getElementById('chatMessages').innerHTML = '<div class="sys-msg">Chatting with ' + convo.partnerUsername + ' 💬</div>';
+  document.getElementById('chatStatus').textContent = '• Online';
+  document.getElementById('chatStatus').style.color = 'var(--green)';
+  document.getElementById('revealBtnEl').style.display = 'none';
+  const app = document.getElementById('app'), chat = document.getElementById('anon-chat');
+  app.classList.add('slide-left'); chat.classList.remove('hidden');
   setTimeout(() => app.classList.add('hidden'), 380);
 }
 </script>
