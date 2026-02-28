@@ -583,23 +583,25 @@ function initSocket() {
   socket.on('matched', () => { openAnonChat(); });
   socket.on('receive_message', ({ text, time }) => { addBubble('in', text, time); });
   socket.on('partner_wants_reveal', ({ username: pUsername }) => {
-  if (confirm('@' + pUsername + ' wants to share their username with you!\n\nAccept or Cancel?')) {
-    socket.emit('accept_reveal');
-  } else {
-    socket.emit('decline_reveal');
-  }
-});
-socket.on('partner_revealed', ({ username: pUsername }) => {
-  addSysMsg('Your batch mate revealed their username: @' + pUsername);
-  document.getElementById('chatPartnerName').textContent = '@' + pUsername;
-});
-socket.on('reveal_accepted', () => {
-  addSysMsg('Your batch mate accepted your username reveal! ✅');
-});
-socket.on('reveal_declined', () => {
-  addSysMsg('Your batch mate declined. You have been disconnected.');
-  leaveChat();
-});
+    addSysMsg('Your batch mate wants to share their username with you!');
+    const accept = confirm('@' + pUsername + ' wants to reveal their username!\n\nAccept or Decline?');
+    if (accept) {
+      socket.emit('accept_reveal');
+    } else {
+      socket.emit('decline_reveal');
+    }
+  });
+  socket.on('partner_revealed', ({ username: pUsername }) => {
+    addSysMsg('Your batch mate revealed their username: @' + pUsername);
+    document.getElementById('chatPartnerName').textContent = '@' + pUsername;
+  });
+  socket.on('reveal_accepted', () => {
+    addSysMsg('Your batch mate accepted your username reveal! ✅');
+  });
+  socket.on('reveal_declined', () => {
+    addSysMsg('Your batch mate declined. You have been disconnected.');
+    leaveChat();
+  });
     document.getElementById('chatPartnerName').textContent = '@' + pUsername;
     addSysMsg('Your batch mate revealed their username: @' + pUsername);
     const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -848,7 +850,7 @@ function showRevealModal() {
 function hideRevealModal() { document.getElementById('revealModal').classList.remove('show'); }
 function confirmReveal() {
   hideRevealModal();
-  if (socket) socket.emit('reveal_username', { username });
+ if (socket) socket.emit('reveal_username', { username });
   addSysMsg('You shared your username: @' + username);
 }
 
