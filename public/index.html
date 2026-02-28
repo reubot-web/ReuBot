@@ -916,7 +916,7 @@ function renderConversations() {
     return;
   }
   list.innerHTML = conversations.map(c => `
-    <div class="convo-item">
+    <div class="convo-item" onclick="openConvo(${c.id})">
       <div class="convo-avatar">🔗</div>
       <div class="convo-info">
         <div class="convo-name">${c.partnerUsername}</div>
@@ -926,6 +926,20 @@ function renderConversations() {
     </div>
   `).join('');
   saveToStorage();
+}
+  function openConvo(id) {
+  const convo = conversations.find(c => c.id === id);
+  if (!convo) return;
+  document.getElementById('chatPartnerName').textContent = convo.partnerUsername;
+  document.getElementById('chatMessages').innerHTML = '<div class="sys-msg">Continuing chat with ' + convo.partnerUsername + '</div>';
+  document.getElementById('chatStatus').textContent = '• Online';
+  document.getElementById('chatStatus').style.color = 'var(--green)';
+  document.getElementById('revealBtnEl').style.display = 'none';
+  const app = document.getElementById('app');
+  const chat = document.getElementById('anon-chat');
+  app.classList.add('slide-left');
+  chat.classList.remove('hidden');
+  setTimeout(() => app.classList.add('hidden'), 380);
 }
 </script>
 </body>
