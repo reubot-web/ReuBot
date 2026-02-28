@@ -582,12 +582,6 @@ function initSocket() {
   socket.on('searching', () => { document.getElementById('onlinePill').textContent = '🔍 Searching...'; });
   socket.on('matched', () => { openAnonChat(); });
   socket.on('receive_message', ({ text, time }) => { addBubble('in', text, time); });
-  socket.on('partner_wants_reveal', ({ username: pUsername }) => {
-    const accept = confirm('@' + pUsername + ' wants to reveal their username!\nOK = Accept | Cancel = Decline');
-    if (accept) { socket.emit('accept_reveal'); } else { socket.emit('decline_reveal'); }
-  });
-  socket.on('reveal_accepted', () => { addSysMsg('Your batch mate accepted your username! ✅'); });
-  socket.on('reveal_declined', () => { addSysMsg('Batch mate declined your reveal.'); leaveChat(); });
   socket.on('partner_revealed', ({ username: pUsername }) => {
     document.getElementById('chatPartnerName').textContent = '@' + pUsername;
     addSysMsg('Your batch mate revealed their username: @' + pUsername);
@@ -738,17 +732,12 @@ function setGender(g) {
 // PROFILE
 function updateProfile() {
   const emoji = userData.gender === 'man' ? '👦' : '👧';
-  const profileAvatar = document.getElementById('profileAvatar');
-  if (profileAvatar) profileAvatar.textContent = emoji;
-  const parts = (userData.studentName || '').split(',');
-  const profileNameDisplay = document.getElementById('profileNameDisplay');
-  if (profileNameDisplay) profileNameDisplay.textContent = parts[0];
-  const infoName = document.getElementById('infoName');
-  if (infoName) infoName.textContent = userData.studentName || '';
-  const infoAdviser = document.getElementById('infoAdviser');
-  if (infoAdviser) infoAdviser.textContent = userData.adviserName || '';
-  const infoGender = document.getElementById('infoGender');
-  if (infoGender) infoGender.textContent = userData.gender === 'man' ? 'Male' : 'Female';
+  document.getElementById('profileAvatar').textContent = emoji;
+  const parts = userData.studentName.split(',');
+  document.getElementById('profileNameDisplay').textContent = parts[0];
+  document.getElementById('infoName').textContent = userData.studentName;
+  document.getElementById('infoAdviser').textContent = userData.adviserName;
+  document.getElementById('infoGender').textContent = userData.gender === 'man' ? 'Male' : 'Female';
 }
 function saveUsername() {
   const val = document.getElementById('usernameInput').value.trim();
