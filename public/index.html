@@ -581,7 +581,7 @@ function initSocket() {
   socket.on('searching', () => { document.getElementById('onlinePill').textContent = '🔍 Searching...'; });
   socket.on('matched', () => { openAnonChat(); });
   socket.on('receive_message', ({ text, time }) => { addBubble('in', text, time); });
-  socket.on('partner_username', ({ username: pUsername }) => {
+  socket.on('partner_accepted_reveal', ({ username: pUsername }) => {
     document.getElementById('chatPartnerName').textContent = '@' + pUsername;
     addSysMsg('Your batch mate revealed their username: @' + pUsername);
     const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -825,7 +825,7 @@ function showRevealModal() {
 function hideRevealModal() { document.getElementById('revealModal').classList.remove('show'); }
 function confirmReveal() {
   hideRevealModal();
-  if (socket) socket.emit('reveal_username', { username });
+  if (socket) socket.emit('accept_reveal', { username });
   addSysMsg('You shared your username: @' + username);
 }
 
