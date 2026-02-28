@@ -455,7 +455,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); display: flex; 
     </div>
     <div class="chat-input-area">
       <input class="chat-input" id="chatInput" placeholder="Type a message..."
-      oninput="onTyping()" onkeydown="if(event.key==='Enter'){sendMsg();event.preventDefault()}">
+       oninput="onTyping()" onkeydown="if(event.key==='Enter'){event.preventDefault();sendMsg()}">
       <button class="send-btn" onclick="sendMsg()">
         <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
       </button>
@@ -875,13 +875,12 @@ function saveEditUsername() {
   document.getElementById('acctUsernameDisplay').textContent = userData.username;
   document.getElementById('editUsernameModal').classList.remove('show');
 }
- function saveEditUsername() {
-  const val = document.getElementById('editUsernameInput').value.trim();
+  function saveUsername() {
+  const val = document.getElementById('usernameInput').value.trim();
   if (!val) return;
-  userData.username = val.startsWith('@') ? val : '@' + val;
-  username = val.startsWith('@') ? val.slice(1) : val;
-  document.getElementById('acctUsernameDisplay').textContent = userData.username;
-  document.getElementById('editUsernameModal').classList.remove('show');
+  username = val;
+  userData.username = '@' + val;
+  const t = document.getElementById('savedToast');
 }    
 function confirmDeleteAccount() {
   if (confirm('Delete your account? This cannot be undone.')) {
