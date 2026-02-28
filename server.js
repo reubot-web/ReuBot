@@ -112,27 +112,8 @@ io.on("connection", (socket) => {
     if (!roomId) return;
     const user = socketToUser.get(socket.id);
     if (user) user.username = username;
-    socket.to(roomId).emit("partner_wants_reveal", { username });
+    socket.to(roomId).emit("partner_revealed", { username });
   });
-
-  socket.on("accept_reveal", () => {
-    const roomId = socketToRoom.get(socket.id);
-    if (!roomId) return;
-    const members = rooms.get(roomId);
-    if (!members) return;
-    const partnerId = members.find(id => id !== socket.id);
-    const partnerUser = socketToUser.get(partnerId);
-    socket.emit("partner_revealed", { username: partnerUser?.username || '' });
-    socket.to(roomId).emit("reveal_accepted");
-  });
-
-  socket.on("decline_reveal", () => {
-    const roomId = socketToRoom.get(socket.id);
-    if (!roomId) return;
-    socket.to(roomId).emit("reveal_declined");
-    leaveRoom(socket);
-  });
-
   // Save conversation (called when both reveal or when leaving after reveal)
   socket.on("save_convo", ({ partnerName, msgs }) => {
     const user = socketToUser.get(socket.id);
