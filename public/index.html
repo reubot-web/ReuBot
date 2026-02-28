@@ -849,7 +849,8 @@ function saveNickname() {
   if (!val) return;
   userData.nickname = val;
   updateProfile();
-  document.getElementById('editNickModal').classList.remove('show');
+  document.getElementById('settingsNickname').textContent = val;
+document.getElementById('editNickModal').classList.remove('show');
 }
 function openAboutMeEdit() {
   document.getElementById('aboutMeInput').value = document.getElementById('aboutMeText').textContent === 'Add a few words about yourself to interest your partner' ? '' : document.getElementById('aboutMeText').textContent;
