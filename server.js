@@ -81,6 +81,19 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Private DM room
+socket.on("join_dm", ({ myName, partnerName }) => {
+  const roomId = [myName, partnerName].sort().join('__');
+  socket.join(roomId);
+  socket.data.dmRoom = roomId;
+});
+
+socket.on("send_dm", ({ text }) => {
+  const roomId = socket.data.dmRoom;
+  if (!roomId) return;
+  socket.to(roomId).emit("receive_dm", { text });
+});
+
   // Accept reveal
   socket.on("reveal_username", ({ username }) => {
     const roomId = socketToRoom.get(socket.id);
