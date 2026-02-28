@@ -82,12 +82,12 @@ io.on("connection", (socket) => {
   });
 
   // Accept reveal
-  socket.on("accept_reveal", ({ username }) => {
+  socket.on("reveal_username", ({ username }) => {
     const roomId = socketToRoom.get(socket.id);
     if (!roomId) return;
     if (!revealAccepted.has(roomId)) revealAccepted.set(roomId, {});
     revealAccepted.get(roomId)[socket.id] = username;
-    socket.to(roomId).emit("partner_accepted_reveal", { username });
+   socket.to(roomId).emit("partner_revealed", { username });
   });
 
   // Typing
