@@ -454,7 +454,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); display: flex; 
       <div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
     </div>
     <div class="chat-input-area">
-     <input class="chat-input" id="chatInput" placeholder="Type a message..."
+      <input class="chat-input" id="chatInput" placeholder="Type a message..."
        oninput="onTyping()" onkeydown="if(event.key==='Enter'){event.preventDefault();sendMsg()}">
       <button class="send-btn" onclick="sendMsg()">
         <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
@@ -583,25 +583,12 @@ function initSocket() {
   socket.on('matched', () => { openAnonChat(); });
   socket.on('receive_message', ({ text, time }) => { addBubble('in', text, time); });
   socket.on('partner_wants_reveal', ({ username: pUsername }) => {
-    addSysMsg('Your batch mate wants to share their username with you!');
-    const accept = confirm('@' + pUsername + ' wants to reveal their username!\n\nAccept or Decline?');
-    if (accept) {
-      socket.emit('accept_reveal');
-    } else {
-      socket.emit('decline_reveal');
-    }
+    const accept = confirm('@' + pUsername + ' wants to reveal their username!\nOK = Accept | Cancel = Decline');
+    if (accept) { socket.emit('accept_reveal'); } else { socket.emit('decline_reveal'); }
   });
+  socket.on('reveal_accepted', () => { addSysMsg('Your batch mate accepted your username! ✅'); });
+  socket.on('reveal_declined', () => { addSysMsg('Batch mate declined your reveal.'); leaveChat(); });
   socket.on('partner_revealed', ({ username: pUsername }) => {
-    addSysMsg('Your batch mate revealed their username: @' + pUsername);
-    document.getElementById('chatPartnerName').textContent = '@' + pUsername;
-  });
-  socket.on('reveal_accepted', () => {
-    addSysMsg('Your batch mate accepted your username reveal! ✅');
-  });
-  socket.on('reveal_declined', () => {
-    addSysMsg('Your batch mate declined. You have been disconnected.');
-    leaveChat();
-  });
     document.getElementById('chatPartnerName').textContent = '@' + pUsername;
     addSysMsg('Your batch mate revealed their username: @' + pUsername);
     const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -751,12 +738,17 @@ function setGender(g) {
 // PROFILE
 function updateProfile() {
   const emoji = userData.gender === 'man' ? '👦' : '👧';
-  document.getElementById('profileAvatar').textContent = emoji;
-  const parts = userData.studentName.split(',');
-  document.getElementById('profileNameDisplay').textContent = parts[0];
-  document.getElementById('infoName').textContent = userData.studentName;
-  document.getElementById('infoAdviser').textContent = userData.adviserName;
-  document.getElementById('infoGender').textContent = userData.gender === 'man' ? 'Male' : 'Female';
+  const profileAvatar = document.getElementById('profileAvatar');
+  if (profileAvatar) profileAvatar.textContent = emoji;
+  const parts = (userData.studentName || '').split(',');
+  const profileNameDisplay = document.getElementById('profileNameDisplay');
+  if (profileNameDisplay) profileNameDisplay.textContent = parts[0];
+  const infoName = document.getElementById('infoName');
+  if (infoName) infoName.textContent = userData.studentName || '';
+  const infoAdviser = document.getElementById('infoAdviser');
+  if (infoAdviser) infoAdviser.textContent = userData.adviserName || '';
+  const infoGender = document.getElementById('infoGender');
+  if (infoGender) infoGender.textContent = userData.gender === 'man' ? 'Male' : 'Female';
 }
 function saveUsername() {
   const val = document.getElementById('usernameInput').value.trim();
@@ -826,11 +818,7 @@ function addBubble(dir, text, time) {
   const wrap = document.createElement('div');
   wrap.className = 'bubble-wrap ' + dir;
   wrap.innerHTML = `<div class="bubble">${text}</div><div class="bubble-time">${now}</div>`;
-  if (typing && msgs.contains(typing)) {
   msgs.insertBefore(wrap, typing);
-} else {
-  msgs.appendChild(wrap);
-}
   scrollChat();
 }
 function addSysMsg(text) {
@@ -850,7 +838,7 @@ function showRevealModal() {
 function hideRevealModal() { document.getElementById('revealModal').classList.remove('show'); }
 function confirmReveal() {
   hideRevealModal();
- if (socket) socket.emit('reveal_username', { username });
+  if (socket) socket.emit('accept_reveal', { username });
   addSysMsg('You shared your username: @' + username);
 }
 
