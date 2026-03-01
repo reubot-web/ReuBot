@@ -629,7 +629,7 @@ function submitProfile() {
   goTo('profile-setup', 'app');
   updateProfile();
 document.getElementById('settingsNickname').textContent = userData.nickname;
-  document.getElementById('settingsAvatar').textContent = userData.icon;
+saveToStorage();
 initSocket();
 }
 
@@ -848,6 +848,7 @@ function saveNickname() {
 userData.nickname = val;
 updateProfile();
 document.getElementById('settingsNickname').textContent = val;
+saveToStorage();
 document.getElementById('editNickModal').classList.remove('show');
 }
 function openAboutMeEdit() {
