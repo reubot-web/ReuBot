@@ -628,7 +628,8 @@ function submitProfile() {
   // skip gender screen, go directly to app
   goTo('profile-setup', 'app');
   updateProfile();
-  initSocket();
+document.getElementById('settingsNickname').textContent = userData.nickname;
+initSocket();
 }
 
 // SPLASH
