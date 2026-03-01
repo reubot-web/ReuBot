@@ -907,7 +907,8 @@ function loadFromStorage() {
     if (ud) userData = JSON.parse(ud);
     if (cv) conversations = JSON.parse(cv);
    if (ic) { iconIndex = parseInt(ic); const psA = document.getElementById('psAvatar'); if(psA) psA.textContent = ICONS[iconIndex]; const sA = document.getElementById('settingsAvatar'); if(sA) sA.textContent = ICONS[iconIndex]; }
-    return !!ud && !!JSON.parse(ud||'{}').nickname;
+    if (ud) document.getElementById('acctUsernameDisplay').textContent = JSON.parse(ud).studentName || '';
+return !!ud && !!JSON.parse(ud||'{}').nickname;
   } catch(e) { return false; }
 }
 
