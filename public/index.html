@@ -629,6 +629,7 @@ function submitProfile() {
   goTo('profile-setup', 'app');
   updateProfile();
 document.getElementById('settingsNickname').textContent = userData.nickname;
+  document.getElementById('settingsAvatar').textContent = userData.icon;
 saveToStorage();
 initSocket();
 }
@@ -904,7 +905,7 @@ function loadFromStorage() {
     const ic = localStorage.getItem('rb_iconIndex');
     if (ud) userData = JSON.parse(ud);
     if (cv) conversations = JSON.parse(cv);
-    if (ic) { iconIndex = parseInt(ic); const psA = document.getElementById('psAvatar'); if(psA) psA.textContent = ICONS[iconIndex]; }
+   if (ic) { iconIndex = parseInt(ic); const psA = document.getElementById('psAvatar'); if(psA) psA.textContent = ICONS[iconIndex]; const sA = document.getElementById('settingsAvatar'); if(sA) sA.textContent = ICONS[iconIndex]; }
     return !!ud && !!JSON.parse(ud||'{}').nickname;
   } catch(e) { return false; }
 }
