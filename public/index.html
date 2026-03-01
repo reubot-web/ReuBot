@@ -844,9 +844,9 @@ function openEditNick() {
 function saveNickname() {
   const val = document.getElementById('editNickInput').value.trim();
   if (!val) return;
-  userData.nickname = val;
-  updateProfile();
-  document.getElementById('settingsNickname').textContent = val;
+userData.nickname = val;
+updateProfile();
+document.getElementById('settingsNickname').textContent = val;
 document.getElementById('editNickModal').classList.remove('show');
 }
 function openAboutMeEdit() {
