@@ -627,15 +627,13 @@ function submitProfile() {
   userData.gender = genderRadio ? genderRadio.value : 'prefer';
   // skip gender screen, go directly to app
  goTo('profile-setup', 'app');
-setTimeout(() => {
   updateProfile();
-  document.getElementById('settingsGender').textContent = userData.gender === 'male' ? 'Male' : userData.gender === 'female' ? 'Female' : 'Prefer not to say';
-  document.getElementById('acctUsernameDisplay').textContent = userData.studentName ? userData.studentName.trim() : '';
+document.getElementById('settingsGender').textContent = userData.gender === 'male' ? 'Male' : userData.gender === 'female' ? 'Female' : 'Prefer not to say';
+document.getElementById('acctUsernameDisplay').textContent = userData.studentName ? userData.studentName.trim() : '';
   document.getElementById('settingsAvatar').textContent = userData.icon;
-  document.getElementById('settingsNickname').textContent = userData.nickname;
-  saveToStorage();
-  initSocket();
-}, 400);
+saveToStorage();
+initSocket();
+}
 
 // SPLASH
 setTimeout(() => {
