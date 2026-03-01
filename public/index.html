@@ -628,7 +628,7 @@ function submitProfile() {
   // skip gender screen, go directly to app
   goTo('profile-setup', 'app');
   updateProfile();
-document.getElementById('settingsNickname').textContent = userData.nickname;
+document.getElementById('settingsGender').textContent = userData.gender === 'male' ? 'Male' : userData.gender === 'female' ? 'Female' : 'Prefer not to say';
 document.getElementById('acctUsernameDisplay').textContent = userData.studentName ? userData.studentName.trim() : '';
   document.getElementById('settingsAvatar').textContent = userData.icon;
 saveToStorage();
