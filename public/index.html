@@ -723,13 +723,13 @@ function setGender(g) {
 
 // PROFILE
 function updateProfile() {
- const emoji = userData.gender === 'male' ? '👦' : userData.gender === 'female' ? '👧' : '🧑';
+const emoji = userData.gender === 'male' ? '👦' : userData.gender === 'female' ? '👧' : '🧑';
   document.getElementById('profileAvatar').textContent = emoji;
   const parts = userData.studentName.split(',');
   document.getElementById('profileNameDisplay').textContent = parts[0];
   document.getElementById('infoName').textContent = userData.studentName;
   document.getElementById('infoAdviser').textContent = userData.adviserName;
- document.getElementById('infoGender').textContent = userData.gender === 'man' ? 'Male' : 'Female';
+document.getElementById('infoGender').textContent = userData.gender === 'male' ? 'Male' : userData.gender === 'female' ? 'Female' : 'Prefer not to say';
 const acct = document.getElementById('acctUsernameDisplay');
 if (acct) acct.textContent = userData.studentName ? userData.studentName.trim() : '';
 }
