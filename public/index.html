@@ -820,7 +820,7 @@ function showRevealModal() {
 function hideRevealModal() { document.getElementById('revealModal').classList.remove('show'); }
 function confirmReveal() {
   hideRevealModal();
-  const myName = userData.studentName ? userData.studentName.split(',')[0].trim() : username;
+ const myName = userData.studentName ? userData.studentName.trim() : '';
   const revealName = userData.studentName ? userData.studentName.split(',')[0].trim() : '';
 if (socket) socket.emit('reveal_username', { username: revealName });
 addSysMsg('You revealed your name: ' + revealName);
