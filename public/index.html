@@ -629,6 +629,7 @@ function submitProfile() {
   goTo('profile-setup', 'app');
   updateProfile();
 document.getElementById('settingsNickname').textContent = userData.nickname;
+  document.getElementById('settingsAvatar').textContent = userData.icon;
 initSocket();
 }
 
