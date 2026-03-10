@@ -275,6 +275,10 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); display: flex; 
        <input class="field-input" id="schoolYear" placeholder="e.g. 2023-2024">
       </div>
       <div class="field-group">
+  <div class="field-label">School</div>
+  <input class="field-input" id="schoolName" placeholder="School">
+</div>
+      <div class="field-group">
         <div class="field-label">Your Name</div>
         <div class="autocomplete-wrap">
           <input class="field-input" id="studentName" placeholder="LAST, FIRST MIDDLE." autocomplete="off"
@@ -689,7 +693,8 @@ function verifyBatch() {
   const errMsg = document.getElementById('errorMsg');
   errMsg.classList.remove('show');
   ['studentName','adviserName'].forEach(id => document.getElementById(id).classList.remove('error'));
-  if (!nameInput || !adviserInput) { errMsg.textContent = '⚠️ Fill in all fields.'; errMsg.classList.add('show'); return; }
+ const schoolInput = document.getElementById('schoolName').value.trim();
+if (!nameInput || !adviserInput || !schoolInput) { errMsg.textContent = '⚠️ Fill in all fields.'; errMsg.classList.add('show'); return; }
   const sec = DATABASE.find(d => d.students.some(s => s.toUpperCase() === nameInput));
   if (!sec) { errMsg.textContent = '❌ Name not in 2023-2024 batch.'; errMsg.classList.add('show'); document.getElementById('studentName').classList.add('error'); return; }
   if (sec.adviser.toLowerCase() !== adviserInput.toLowerCase()) { errMsg.textContent = '❌ Adviser does not match your section.'; errMsg.classList.add('show'); document.getElementById('adviserName').classList.add('error'); return; }
