@@ -912,6 +912,19 @@ function loadFromStorage() {
     const cv = localStorage.getItem('rb_conversations');
     const ic = localStorage.getItem('rb_iconIndex');
     if (ud) userData = JSON.parse(ud);
+    if (ud) {
+  userData = JSON.parse(ud);
+  setTimeout(() => {
+    const sN = document.getElementById('settingsNickname');
+    const sA = document.getElementById('settingsAvatar');
+    const sG = document.getElementById('settingsGender');
+    const aU = document.getElementById('acctUsernameDisplay');
+    if (sN) sN.textContent = userData.nickname || '';
+    if (sA) sA.textContent = userData.icon || '🐱';
+    if (sG) sG.textContent = userData.gender === 'male' ? 'Male' : userData.gender === 'female' ? 'Female' : 'Prefer not to say';
+    if (aU) aU.textContent = userData.studentName ? userData.studentName.trim() : '';
+  }, 500);
+}
     if (cv) conversations = JSON.parse(cv);
    if (ic) { iconIndex = parseInt(ic); const psA = document.getElementById('psAvatar'); if(psA) psA.textContent = ICONS[iconIndex]; const sA = document.getElementById('settingsAvatar'); if(sA) sA.textContent = ICONS[iconIndex]; }
     if (ud) document.getElementById('acctUsernameDisplay').textContent = JSON.parse(ud).studentName || '';
